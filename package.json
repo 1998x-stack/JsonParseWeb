@@ -1,0 +1,13 @@
+{
+  "name": "jsonparseweb",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first JSON developer workbench",
+  "scripts": {
+    "test": "node --test tests/js/*.test.mjs",
+    "serve": "python3 -m http.server 8080",
+    "check": "npm test"
+  },
+  "engines": {"node": ">=20"}
+}
