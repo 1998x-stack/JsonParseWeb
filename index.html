@@ -10,7 +10,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="top-inner"><div><p class="eyebrow">DEVELOPER WORKBENCH · V0.2</p><h1>JSONParseWeb</h1><p class="subtitle">本地优先的 JSON 解析、验证与可视化工作台</p></div><span class="privacy">● 本地解析 · 不自动上传</span></div>
+    <div class="top-inner"><div><p class="eyebrow">DEVELOPER WORKBENCH · V0.3 M04-E/F</p><h1>JSONParseWeb</h1><p class="subtitle">本地优先的 JSON 解析、验证与可视化工作台</p></div><span class="privacy">● 本地解析 · 不自动上传</span></div>
   </header>
   <main class="layout">
     <section class="panel" aria-labelledby="sourceHeading">
@@ -19,10 +19,13 @@
       <textarea id="jsonInput" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder='{"hello": "world", "active": true}'></textarea>
       <div class="buttonbar">
         <button class="primary" id="parseBtn">解析 JSON</button>
+        <button id="cancelBtn" hidden>取消解析</button>
         <button id="formatBtn">格式化</button>
         <button id="loadSampleBtn">加载示例</button>
         <button id="clearBtn">清空</button>
       </div>
+      <label class="engine-option"><input type="checkbox" id="losslessMode"> V0.3 无损解析（Worker 实验模式）</label>
+      <label class="engine-option"><input type="checkbox" id="virtualTreeMode"> M04 虚拟树 / 表格（实验模式）</label>
       <div class="upload" id="dropZone">
         <label for="fileInput">拖拽 .json 文件至此，或 <span>选择文件</span></label>
         <input type="file" id="fileInput" accept=".json,application/json">
@@ -32,8 +35,14 @@
     <section class="panel" aria-labelledby="outputHeading">
       <div class="panel-heading"><div><p class="eyebrow dark">02 / RESULT</p><h2 id="outputHeading">解析结果</h2></div><button id="downloadBtn">导出原文</button></div>
       <div id="status" class="status" role="status" aria-live="polite"></div>
+      <form id="pointerNav" class="pointer-nav" hidden aria-label="JSON Pointer 定位">
+        <label for="pointerInput">JSON Pointer</label>
+        <div class="pointer-controls"><input id="pointerInput" type="text" spellcheck="false" placeholder="/users/0/id" aria-describedby="pointerFeedback"><button id="navigatePointerBtn" type="submit">定位节点</button></div>
+        <p id="pointerFeedback" class="pointer-feedback" role="status" aria-live="polite"></p>
+      </form>
       <nav class="tabs" aria-label="展示模式"><button class="selected" data-view="tree" aria-pressed="true">树形视图</button><button data-view="raw" aria-pressed="false">原始数据</button><button data-view="table" aria-pressed="false">表格视图</button></nav>
       <div id="jsonDisplay" class="output" aria-label="JSON 解析展示"><p class="muted">解析结果将在此显示。</p></div>
+      <section id="nodeDetails" class="node-details" aria-label="当前节点详情" hidden></section>
       <div id="warnings" class="warnings" aria-live="polite"></div>
       <div id="stats" class="stats" hidden>
         <div><span>属性数</span><strong id="keys">0</strong></div>
@@ -44,7 +53,7 @@
       </div>
     </section>
   </main>
-  <footer>JSONParseWeb v0.2 · 默认不发送或保存数据 · <a href="./docs/architecture.md">架构说明</a></footer>
+  <footer>JSONParseWeb v0.3 experimental · 默认不发送或保存数据 · <a href="./docs/architecture.md">架构说明</a></footer>
   <script type="module" src="./src/app.mjs"></script>
 </body>
 </html>
