@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="zh-CN"><meta charset="utf-8"><title>JSONParseWeb smoke</title><body>
+<output id="out">PENDING</output><iframe id="app" src="/index.html" hidden></iframe>
+<script type="module">
+const out = document.getElementById('out');
+const app = document.getElementById('app');
+function assert(ok, message){ if(!ok) throw Error(message); }
+app.addEventListener('load', () => {
+  try {
+    const d = app.contentDocument;
+    const input = d.getElementById('jsonInput');
+    input.value = 'false';
+    input.dispatchEvent(new Event('input', {bubbles:true}));
+    d.getElementById('parseBtn').click();
+    assert(d.getElementById('status').textContent.includes('解析成功'), 'false not parsed');
+    d.querySelector('[data-view="raw"]').click();
+    assert(d.getElementById('jsonDisplay').textContent === 'false', 'raw false missing');
+    input.value = '{"payload":"<img src=x onerror=alert(1)>"}';
+    input.dispatchEvent(new Event('input', {bubbles:true}));
+    d.getElementById('parseBtn').click();
+    d.querySelector('[data-view="raw"]').click();
+    assert(d.getElementById('jsonDisplay').querySelector('img') === null, 'HTML injection');
+    d.getElementById('loadSampleBtn').click();
+    assert(d.getElementById('stats').hidden === false, 'stats missing');
+    assert(d.getElementById('jsonDisplay').querySelector('details'), 'tree missing');
+    d.getElementById('clearBtn').click();
+    assert(input.value === '', 'clear did not clear');
+    out.textContent = 'PASS: browser smoke';
+  } catch(err) {out.textContent = `FAIL: ${err.message}`;}
+});
+</script></body></html>
