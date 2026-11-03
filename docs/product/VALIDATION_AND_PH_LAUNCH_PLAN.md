@@ -8,7 +8,7 @@
 Primary goal: developer can detect and verify one meaningful JSON interoperability/data-shape issue faster or more accurately than with their usual workflow, without transferring the document.
 
 **North Star (not pageviews)**:
-\`verified_issue_resolution_rate = correctly diagnosed and source-located tasks / eligible benchmark tasks\`
+`verified_issue_resolution_rate = correctly diagnosed and source-located tasks / eligible benchmark tasks`
 Use closed-form, expert-labeled tasks only; in production, the user's true resolution is unknown, so don't infer “fixed” from button clicks.
 
 ### Metric dictionary
@@ -49,13 +49,13 @@ Balanced recruitment: five backend engineers, five frontend engineers, five API/
 - **Do not ask participants to upload real proprietary JSON.** Supply synthetic fixtures or allow local-only use with no recording of sensitive content.
 - Avoid leading questions ("Would you love our AI feature?").
 - Capture exact participants' phrases with permission, task sequence and where they hesitated. Separate interviewer observations from participant statements.
-- Do not report a made-up sample proportion; publish \`n\` for each result and describe selection bias.
+- Do not report a made-up sample proportion; publish `n` for each result and describe selection bias.
 
 ## 3. Controlled comparative usability test
 
 **Task set** (expert-graded answers pre-registered):
-- T1 numeric precision \`9007199254740993\`, exact evidence offset and safe interpretation.
-- T2 escaped duplicate key \`"a"\` vs \`"\\u0061"\`, explain parser-dependent behavior.
+- T1 numeric precision `9007199254740993`, exact evidence offset and safe interpretation.
+- T2 escaped duplicate key `"a"` vs `"\\u0061"`, explain parser-dependent behavior.
 - T3 object-array mixed type and missing-vs-null; report actual observed sample count.
 - T4 locate node using path containing / and ~; test path encoding.
 - T5 (post-V1-Diff) compare two payloads to find removed/mutated fields.
@@ -89,13 +89,13 @@ The >=20% target is a hypothesis for product validation and not evidence of achi
 ### Numeric and duplicate-key fixtures
 - Golden JSON lexical sequence (raw numbers, quoted key spans, repeated members) before/after formatting, copy/export.
 - Negative corpus: JSON comments, NaN, trailing commas, truncated numbers, unpaired surrogate cases, invalid UTF-8.
-- No implicit \`JSON.parse\` or JSON.stringify of authoritative numerical data.
+- No implicit `JSON.parse` or JSON.stringify of authoritative numerical data.
 - Warnings explain that a large JSON number remains syntactically valid; no “JSON invalid” misclassification.
 
 ### Drift observations
-- 8 number + 2 string \`price\` -> 8/10 and 2/10; raw examples.
+- 8 number + 2 string `price` -> 8/10 and 2/10; raw examples.
 - 2 objects (1 missing) -> distribution only if threshold >=3 examples, not noisy anomaly.
-- \`null\` explicitly present vs field absent.
+- `null` explicitly present vs field absent.
 - Array mixed primitives/objects -> no untrue object-field schema.
 - Duplicate key in an object-array member -> preserve occurrence and diagnostic.
 - Sample bias note, observations not guaranteed server schema.
@@ -110,7 +110,7 @@ The >=20% target is a hypothesis for product validation and not evidence of achi
 
 ### Performance
 - Input fixtures 10KiB / 256KiB / 1MiB / 2MiB, 100k AST nodes separately where size permits.
-- Timing labels: \`parse\`, \`firstFinding\`, \`firstRender\`, \`expand\`, \`scroll\`, \`copy\`.
+- Timing labels: `parse`, `firstFinding`, `firstRender`, `expand`, `scroll`, `copy`.
 - Browser and hardware recorded, cold and warm separately; >10 runs for distribution.
 - Memory peak and long tasks; no claims of 50MB support while cap is 2MiB.
 - Large-capacity research stage must redesign parsing budgets, streaming and UI separately.
@@ -128,20 +128,20 @@ The >=20% target is a hypothesis for product validation and not evidence of achi
 Rollout feature flag remains until each implementation passes its own gates. Never merge PRD as if runtime features are delivered.
 
 ### Dependencies / repo integration
-- Existing [M04 consolidated PR #9](https://github.com/1998x-stack/JsonParseWeb/pull/9) must be reviewed. Current \`main\` does not yet contain V0.3 features at the time of this research.
-- Research PR branches directly from \`main\`, documentation only; later PRODUCT PRs should start from the **actual merged** runtime baseline, not stale branches.
+- Existing [M04 consolidated PR #9](https://github.com/1998x-stack/JsonParseWeb/pull/9) must be reviewed. Current `main` does not yet contain V0.3 features at the time of this research.
+- Research PR branches directly from `main`, documentation only; later PRODUCT PRs should start from the **actual merged** runtime baseline, not stale branches.
 - Confirm LICENSE before marketing as Open Source; public GitHub read access alone is not an open-source grant.
 
 ## 6. Positioning experiments
 
 ### Variants
-A: \`Find hidden JSON bugs without uploading your data.\`
-B: \`Your JSON is valid. But is your data reliable?\`
-C: \`Inspect API responses with exact, local evidence.\`
+A: `Find hidden JSON bugs without uploading your data.`
+B: `Your JSON is valid. But is your data reliable?`
+C: `Inspect API responses with exact, local evidence.`
 
 Test comprehension with strangers; ask each what problem the product solves and to predict what clicking Demo will do. Do not optimize only click-through without task outcomes.
 
-**Do not pitch** \`AI JSON detective\`, \`unlimited JSON\`, \`all bugs found\`, \`100% secure\` unless substantiated (and some claims cannot be substantiated categorically).
+**Do not pitch** `AI JSON detective`, `unlimited JSON`, `all bugs found`, `100% secure` unless substantiated (and some claims cannot be substantiated categorically).
 
 ## 7. Go-to-market channels
 
@@ -170,21 +170,21 @@ Based on [official PH Launch Guide](https://help.producthunt.com/en/articles/173
 12–20s: Click evidence, SourceSpan highlights text; duplicate-key second occurrence.
 20–30s: Compare user-supplied schema samples and explain observed vs certain.
 30–38s: Open privacy/network proof / offline mode (only if actually shipped).
-38–45s: Download sanitized evidence, call to action \`Try with a sample\`.
+38–45s: Download sanitized evidence, call to action `Try with a sample`.
 
 All footage must use an actual working build. No artificially edited product claims.
 
 ## 9. Product Hunt user feedback: tagging protocol
 
 When feedback comes in, label each comment:
-\`{source_link, date, product_version, theme, request_or_observation, status, confidence, affected_persona, reproducible_case, severity, consent_status}\`.
-Separate \`compliment\`, \`feature request\`, \`bug report\`, \`workflow question\`, \`pricing objection\`, \`privacy concern\`.
+`{source_link, date, product_version, theme, request_or_observation, status, confidence, affected_persona, reproducible_case, severity, consent_status}`.
+Separate `compliment`, `feature request`, `bug report`, `workflow question`, `pricing objection`, `privacy concern`.
 After launch, publish weekly issues triage and actual engineering resolutions. Do not silently gather raw example JSON from commenters.
 
 ## 10. Red-team review
 
 Ask independent reviewers to try to prove the product false:
-- Can an ordinary \`JSON.parse\` pipeline already solve a stated pain faster?
+- Can an ordinary `JSON.parse` pipeline already solve a stated pain faster?
 - Can a large sample cause main-thread lock despite virtualized view?
 - Can the product miss an ambiguous duplicate and present a fake RFC 6901 pointer?
 - Does a redacted report still leak property names, URL or tokens?
