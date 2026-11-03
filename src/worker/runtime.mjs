@@ -6,6 +6,7 @@ import {formatLossless} from '../../packages/json-core/formatter.mjs';
 import {pointerFor, resolvePointer, PointerFault} from '../../packages/json-core/pointer.mjs';
 import {VisibleTreeIndex} from '../../packages/json-core/visible-index.mjs';
 import {TableProjection} from '../../packages/json-core/table-projection.mjs';
+import {inspectDocument} from '../../packages/json-core/findings.mjs';
 
 const PAGE_SIZE = 100;
 const MAX_PREVIEW = 140;
@@ -85,9 +86,9 @@ export function createWorkerRuntime() {
   };
   const parse = (request, parsed) => {
     // Keep invalid documents too, so the following query returns an explicit validation error.
-    state={docId:request.docId,revision:request.revision,doc:parsed,tree:null,table:null};
+    state={docId:request.docId,revision:request.revision,doc:parsed,tree:null,table:null,inspection:parsed.ok?inspectDocument(parsed):null};
     return parsed.ok
-      ? {validSyntax:true,root:project(parsed,parsed.rootId),stats:parsed.stats,diagnostics:parsed.diagnostics.slice(0,100)}
+      ? {validSyntax:true,root:project(parsed,parsed.rootId),stats:parsed.stats,diagnostics:parsed.diagnostics.slice(0,100),inspection:{total:state.inspection.total,retained:state.inspection.retained,truncated:state.inspection.truncated,rules:state.inspection.rules}}
       : {validSyntax:false,root:null,stats:null,diagnostics:parsed.diagnostics?.length ? parsed.diagnostics.slice(0,100) : [parsed.error ?? {code:'INVALID_JSON',severity:'error',message:'无法解析 JSON'}]};
   };
   const operations = {
@@ -154,15 +155,24 @@ export function createWorkerRuntime() {
       const node = doc.nodes[targetId];
       return {...result, span: {start: node.start, end: node.end}};
     },
+    GET_FINDINGS(request) {
+      requireState(request);
+      const {offset=0,limit=12}=request.payload??{};
+      if(!asInt(offset,0,1000)||!asInt(limit,1,30))throw protocolError('INVALID_PAGE','Finding page exceeds allowed range');
+      const result=state.inspection;
+      return {offset,total:result.total,retained:result.retained,truncated:result.truncated,
+        items:result.findings.slice(offset,offset+limit),
+        nextOffset:offset+limit<result.retained?offset+limit:null};
+    },
     GET_TABLE_SCHEMA(request) {
       const doc=requireState(request);
       const {offset=0,limit=16}=request.payload??{};
-      if(!state.table)state.table=new TableProjection(doc);
+      if(!state.table) state.table=new TableProjection(doc);
       return state.table.schema(offset,limit);
     },
     GET_TABLE_WINDOW(request) {
       requireState(request);
-      if(!state.table)throw protocolError('TABLE_NOT_INITIALIZED','请先获取表格 Schema');
+      if(!state.table) throw protocolError('TABLE_NOT_INITIALIZED','请先获取表格 Schema');
       return state.table.window(request.payload??{});
     },
     GET_NODE(request) {

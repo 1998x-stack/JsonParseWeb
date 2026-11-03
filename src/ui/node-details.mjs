@@ -28,20 +28,21 @@ const make = (tag, cls='', content=undefined) => {
 };
 
 export class NodeDetailsView {
-  constructor({target,controller,sourceInput,isCurrent,onMessage=()=>{}}) {
+  constructor({target,controller,sourceInput,isCurrent,locale='zh',onMessage=()=>{}}) {
     if (!target||!controller||!sourceInput||typeof isCurrent!=='function') throw new TypeError('缺少节点详情依赖');
-    Object.assign(this,{target,controller,sourceInput,isCurrent,onMessage});
+    Object.assign(this,{target,controller,sourceInput,isCurrent,onMessage,locale});
+    this.text=(zh,en)=>this.locale==='en'?en:zh;
     this.seq=0;this.selected=null;this.disposed=false;
     this.target.replaceChildren();
-    const heading=make('h3','node-details-title','节点详情');
-    this.meta=make('p','node-details-meta','选择树形节点查看详细信息');
+    const heading=make('h3','node-details-title',this.text('节点详情','Node details'));
+    this.meta=make('p','node-details-meta',this.text('选择树形节点查看详细信息','Select a node to view exact source evidence'));
     this.path=make('p','node-details-pointer');
     this.preview=make('pre','node-details-preview');
     this.note=make('p','node-details-note');
     const controls=make('div','node-details-actions');
-    this.copyPath=make('button','','复制 JSON Pointer');this.copyPath.type='button';this.copyPath.id='copyPointerBtn';
-    this.copyRawButton=make('button','','复制完整原文');this.copyRawButton.type='button';this.copyRawButton.id='copyRawBtn';
-    this.locateButton=make('button','','定位源码');this.locateButton.type='button';this.locateButton.id='locateSourceBtn';
+    this.copyPath=make('button','',this.text('复制 JSON Pointer','Copy JSON Pointer'));this.copyPath.type='button';this.copyPath.id='copyPointerBtn';
+    this.copyRawButton=make('button','',this.text('复制完整原文','Copy exact source'));this.copyRawButton.type='button';this.copyRawButton.id='copyRawBtn';
+    this.locateButton=make('button','',this.text('定位源码','Locate source'));this.locateButton.type='button';this.locateButton.id='locateSourceBtn';
     controls.append(this.copyPath,this.copyRawButton,this.locateButton);
     this.target.append(heading,this.meta,this.path,this.preview,this.note,controls);
     this.copyPath.addEventListener('click',()=>{void this.copyPointer();});
@@ -52,7 +53,7 @@ export class NodeDetailsView {
   get alive(){return !this.disposed&&this.isCurrent();}
   reset(){
     this.seq++;this.selected=null;
-    this.meta.textContent='选择树形节点查看详细信息';
+    this.meta.textContent=this.text('选择树形节点查看详细信息','Select a node to view exact source evidence');
     this.path.textContent='';this.preview.textContent='';this.note.textContent='';
     this.copyPath.disabled=true;this.copyRawButton.disabled=true;this.locateButton.disabled=true;
   }
@@ -60,19 +61,19 @@ export class NodeDetailsView {
     if (!this.alive) return;
     const seq=++this.seq,rev=this.controller.revision;
     this.selected=null;
-    this.meta.textContent='正在读取节点详情…';
+    this.meta.textContent=this.text('正在读取节点详情…','Loading node details…');
     this.copyPath.disabled=true;this.copyRawButton.disabled=true;this.locateButton.disabled=true;
     try {
       const {node}=await this.controller.query('GET_NODE',{id:nodeId});
       if (!this.alive||seq!==this.seq||rev!==this.controller.revision) return;
       const details=boundedSourcePreview(this.sourceInput.value,node.span);
       this.selected={node,revision:rev};
-      const name=node.label===null?'根节点':node.label;
-      this.meta.textContent=`${name} · ${node.kind} · 深度 ${node.depth} · UTF-16 [${node.span.start}, ${node.span.end})`;
+      const name=node.label===null?this.text('根节点','Root'):node.label;
+      this.meta.textContent=this.locale==='en'?`${name} · ${node.kind} · depth ${node.depth} · UTF-16 [${node.span.start}, ${node.span.end})`:`${name} · ${node.kind} · 深度 ${node.depth} · UTF-16 [${node.span.start}, ${node.span.end})`;
       const ambiguous=node.pointer===null;
-      this.path.textContent=ambiguous?'JSON Pointer：重复键导致路径歧义':`JSON Pointer：${node.pointer===''?'（根节点，空字符串）':node.pointer}`;
-      this.preview.textContent=details.text+(details.truncated?'\n…（预览截断，复制仍保留完整原文）':'');
-      this.note.textContent=`原文长度：${details.totalLength} UTF-16 代码单元${node.occurrence>0?` · 同名属性第 ${node.occurrence+1} 次出现`:''}`;
+      this.path.textContent=ambiguous?this.text('JSON Pointer：重复键导致路径歧义','JSON Pointer: ambiguous duplicate property'):`JSON Pointer: ${node.pointer===''?this.text('（根节点，空字符串）','(root, empty string)'):node.pointer}`;
+      this.preview.textContent=details.text+(details.truncated?this.text('\n…（预览截断，复制仍保留完整原文）','\n… (preview truncated; exact copy stays complete)'):'');
+      this.note.textContent=this.locale==='en'?`Source length: ${details.totalLength} UTF-16 units${node.occurrence>0?` · occurrence ${node.occurrence+1}`:''}`:`原文长度：${details.totalLength} UTF-16 代码单元${node.occurrence>0?` · 同名属性第 ${node.occurrence+1} 次出现`:''}`;
       this.copyPath.disabled=ambiguous;this.copyRawButton.disabled=false;this.locateButton.disabled=false;
     }catch(error){
       if(!this.alive||seq!==this.seq)return;

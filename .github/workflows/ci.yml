@@ -52,6 +52,7 @@ jobs:
           python tests/e2e/m04_playwright.py
           python tests/e2e/m04d_playwright.py
           python tests/e2e/m04e_playwright.py
+          python tests/e2e/product_v1_playwright.py
 
   independent-evaluation:
     runs-on: ubuntu-latest
@@ -60,9 +61,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Independent golden and resource evaluator
+      - name: Independent golden / resource evaluator
         run: M04_REPORT_FILE=m04-quality-report.json node tests/evaluation/m04-evaluator.mjs
-      - name: Save synthetic benchmark evidence
+      - name: Store bounded synthetic benchmark evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:

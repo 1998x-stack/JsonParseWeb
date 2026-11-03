@@ -141,11 +141,69 @@ Open `/?engine=v03&virtual=1` after starting the local static server. Enter an R
 The M04 navigation and detail panel is only available in Worker + virtual-tree mode. No document content is sent to a backend. M04-E virtual table and M04-F independent evaluation are future work.
 
 
-## M04-E/F — Lossless virtual table and independent quality gates
+## V0.3 M04-E/F — Lossless virtual table and independent quality gates
 
-Run the static server, open `/?engine=v03&virtual=1`, and select 表格视图.
-The table uses an **ordered lossless AST**, not JS object serialization. Duplicate object keys have distinct occurrence-aware columns; missing properties differ from `null`. All number previews preserve original lexemes, including very large integers, `-0`, and exponent notation. Mixed arrays use 类型 and 值 columns. Only rows/columns visible in the browser are requested from the Worker, with strict protocol bounds (80 rows, 24 columns, 800 cells; UI uses smaller windows).
+Run `python3 -m http.server 8080` and open `http://localhost:8080/?engine=v03&virtual=1`.
+Select **表格视图** with **V0.3 无损解析** and **M04 虚拟树 / 表格** enabled.
+The table uses the *ordered AST*, not a native JavaScript object: duplicate object keys
+produce separate occurrence-aware columns, `null` remains distinct from missing values,
+and unsafe integers, decimals and exponents keep their original number lexemes.
+Top-level arrays of objects expose ordered union columns. Mixed/scalar arrays expose
+类型 and 值 columns. Only viewport row/column windows are transferred from the Worker;
+its projections are bounded to 80 rows / 24 columns / 800 cells per message (the UI uses
+smaller limits, capped at 48 rows and 16 columns).
 
-Run `npm test` for core/Worker/UI geometry tests and `npm run evaluate:m04` for independent synthetic golden and bounded-resource gates. GitHub Actions runs a real Chromium E2E suite (M03–M04-E) and uploads the independent evaluation JSON report. These Node benchmark timings are not browser performance guarantees. The V0.2 browser engine and M03 paged tree remain available as fallback.
+Validation:
 
-See `docs/v0.3/M04_RELEASE_REPORT.md` for evidence, limitations and rollout. JSON Schema, JSONPath queries, editing/undo and multi-document workflows are future V0.4/V0.5 scope.
+```bash
+npm test                 # legacy, lossless core, Worker, tree, table, navigation
+npm run evaluate:m04     # independent black-box synthetic golden / resource evaluator
+npm run bench:m04        # existing visible-index benchmark
+python3 -m http.server 8765
+python tests/e2e/m04e_playwright.py  # separate terminal, Playwright Chromium installed
+```
+
+GitHub Actions runs separate frontend/backend/real Chromium/independent evaluation jobs,
+with the independent evaluator's synthetic P50/P95 timings uploaded as an artifact.
+These timings are **not** browser UX guarantees; the Release Gate records actual CI
+results for each commit. Chromium E2E and screen-reader manual checks are distinct.
+
+The V0.2 browser engine and M03 paged views remain available as rollback paths.
+This M04 delivery does **not** implement JSON Schema, JSONPath query language, edit/undo,
+large-file streaming, multi-document concurrency or a plugin runtime (future V0.4/V0.5).
+
+
+## PRODUCT-01/02 beta: issue-first, local-only JSON inspection
+
+This integration branch adds a public, English-first landing experience with three
+synthetic one-click demonstrations and optional Chinese translation. At `/`, the
+lossless Web Worker and virtual explorer are enabled by default when available.
+The previous `?engine=v03` and `?engine=v03&virtual=1` URLs remain supported
+for compatibility and can still be used to test the older paged UI. The advanced
+engine menu contains a manual opt-out to legacy mode.
+
+**The findings engine currently supports two deterministic checks only:**
+
+- `JSON.UNSAFE_INTEGER`: integer number literals outside JavaScript's safe
+  integer range. Original numeric text is retained; a warning is not proof of an
+  actual downstream rounding bug.
+- `JSON.DUPLICATE_KEY`: repeated decoded object property names including `"a"`
+  versus `"\\u0061"`. The evidence includes the key-token spans of both
+  occurrences; a standard JSON Pointer may be ambiguous.
+
+The Worker returns a bounded summary and paginated findings. Issue cards can
+locate precise source spans and copy exact text. `No findings` does not assert
+that the JSON or API is valid beyond the two enabled checks. No content is
+automatically uploaded or persisted. A 2 MiB input cap still applies.
+
+```bash
+python3 -m http.server 8080
+# visit http://localhost:8080/ and click a synthetic demo
+npm test
+# Browser E2E needs Playwright Chromium + a local server on port 8765:
+python tests/e2e/product_v1_playwright.py
+```
+
+See `docs/product/PRODUCT_01_02_IMPLEMENTATION.md` for feature boundaries,
+security assumptions and verification. PRODUCT-03 multi-sample Schema Drift,
+full i18n, public deployment and Product Hunt release are not delivered yet.
