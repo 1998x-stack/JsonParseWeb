@@ -1,4 +1,4 @@
-name: v0.3 M04-C virtual tree + worker quality gates
+name: v0.3 M04-D navigation + virtual tree quality gates
 on:
   push:
   pull_request:
@@ -50,3 +50,4 @@ jobs:
           done
           python tests/e2e/m03_playwright.py
           python tests/e2e/m04_playwright.py
+          python tests/e2e/m04d_playwright.py

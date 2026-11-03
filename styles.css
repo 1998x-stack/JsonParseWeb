@@ -13,3 +13,20 @@
 .virtual-tree-disclosure{width:24px;min-width:24px;height:26px;padding:0;border:0;background:transparent;color:#3b5e8d;border-radius:4px;font-size:17px;line-height:1}
 .virtual-tree-disclosure:disabled{cursor:default;opacity:0}.virtual-tree-value,.virtual-tree-row .tree-key{display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.virtual-tree-row .tree-key{flex-shrink:0;max-width:42%}.virtual-tree-value{min-width:0;flex:1}
 .virtual-tree-count{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#647794;padding:6px 4px;border-top:1px solid #e4eaf2}
+
+/* M04-D: pointer navigation and bounded detail preview. */
+.pointer-nav{display:grid;gap:.45rem;margin:.8rem 0;padding:.75rem;border:1px solid #dfe6f0;border-radius:10px;background:#f8faff}
+.pointer-nav[hidden],.node-details[hidden]{display:none}
+.pointer-nav label{font-weight:650;font-size:.85rem}
+.pointer-controls{display:flex;align-items:center;gap:.55rem}
+.pointer-controls input{min-width:0;flex:1;border:1px solid #cdd9e9;border-radius:8px;padding:.65rem;font:13px ui-monospace,monospace}
+.pointer-feedback{min-height:1em;margin:0;color:#365880;font-size:.78rem;overflow-wrap:anywhere}
+.node-details{margin:.9rem 0 0;padding:.85rem;border:1px solid #dfe6f0;border-radius:10px;background:#fcfdff}
+.node-details-title{font-size:.98rem;margin:0 0 .5rem}
+.node-details-meta,.node-details-pointer,.node-details-note{font-size:.8rem;margin:.35rem 0;overflow-wrap:anywhere}
+.node-details-pointer{color:#2658a9}
+.node-details-preview{font:12px/1.5 ui-monospace,monospace;max-height:150px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#f0f4fa;border-radius:6px;padding:.6rem}
+.node-details-actions{display:flex;flex-wrap:wrap;gap:.4rem}
+.node-details-actions button{font-size:.77rem;padding:.45rem .65rem}
+.node-details-actions button:disabled{cursor:not-allowed;opacity:.5}
+@media(max-width:500px){.pointer-controls{flex-direction:column;align-items:stretch}}

@@ -132,3 +132,10 @@ Run `npm test` and `npm run bench:m04` to exercise randomized tree traces, 100k-
 Enable the browser Worker mode and **M04 viewport virtual tree** checkbox, or open `http://localhost:8080/?engine=v03&virtual=1`. The AST and expanded visible preorder stay in the Worker; the view requests windows of at most 120 rows and mounts only current viewport rows. Keyboard: Up/Down, Home/End, Right expand or next child, Left collapse or go to parent. The M03 paginated tree is available by unchecking the virtual tree option. The virtual tree is not enabled in legacy mode.
 
 Run `npm test` and `python tests/e2e/m04_playwright.py` with the local HTTP server on port 8765 (install Playwright Chromium as indicated in `.github/workflows/ci.yml`). M04-D JSON Pointer search/detail view and M04-E virtual table are future stages.
+
+
+## M04-D AST Navigation & Node Details (experimental)
+
+Open `/?engine=v03&virtual=1` after starting the local static server. Enter an RFC 6901 JSON Pointer (empty input means the root), click **定位节点** to atomically expand ancestors and select the node. Clicking a virtual tree row also updates the detail panel. **复制 JSON Pointer** is disabled for any ambiguous duplicate-member path; **复制完整原文** uses the immutable parsed source span against the current local textarea text (not an additional Worker transfer), preserving exact unsafe-number spelling and whitespace even beyond 64 KiB. **定位源码** selects the exact UTF-16 span in the textarea. The preview is capped at 1,800 UTF-16 code units while exact copy retains the full source span. Browser clipboard permission is required for copying.
+
+The M04 navigation and detail panel is only available in Worker + virtual-tree mode. No document content is sent to a backend. M04-E virtual table and M04-F independent evaluation are future work.

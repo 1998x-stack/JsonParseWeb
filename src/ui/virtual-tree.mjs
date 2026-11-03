@@ -29,13 +29,13 @@ const el = (tag, cls='', text=undefined) => {
 const errorMessage = e => e?.message || '虚拟树操作失败';
 
 export class VirtualTreeView {
-  constructor({target, controller, isCurrent, onError=()=>{}, rowHeight=TREE_ROW_HEIGHT, overscan=TREE_OVERSCAN}={}) {
+  constructor({target, controller, isCurrent, onError=()=>{}, onSelect=()=>{}, rowHeight=TREE_ROW_HEIGHT, overscan=TREE_OVERSCAN}={}) {
     if (!target || !controller || typeof isCurrent !== 'function') throw new TypeError('缺少虚拟树渲染依赖');
-    this.target=target;this.controller=controller;this.isCurrent=isCurrent;this.onError=onError;
+    this.target=target;this.controller=controller;this.isCurrent=isCurrent;this.onError=onError;this.onSelect=onSelect;
     this.rowHeight=rowHeight;this.overscan=overscan;
     this.disposed=false;this.epoch=null;this.totalVisible=0;this.loaded=null;
     this.requestSeq=0;this.inFlight=false;this.queued=false;this.mutation=false;
-    this.frame=null;this.activeId=null;this.activeIndex=0;this.selectedId=null;
+    this.frame=null;this.activeId=null;this.activeIndex=0;this.selectedId=null;this.selectedIndex=0;
     this.idPrefix=`json-tree-r${controller.revision}-`;
   }
   get alive() {return !this.disposed && this.isCurrent();}
@@ -59,9 +59,10 @@ export class VirtualTreeView {
       const init=await this.controller.query('TREE_INIT',{expandRoot:true});
       if(!this.alive)return;
       this.epoch=init.epoch;this.totalVisible=init.totalVisible;
-      this.activeId=init.rootId;this.selectedId=init.rootId;this.activeIndex=0;
+      this.activeId=init.rootId;this.selectedId=init.rootId;this.activeIndex=0;this.selectedIndex=0;
       this.spacer.style.height=`${this.totalVisible*this.rowHeight}px`;
       await this.loadWindow();
+      if(this.alive)void this.onSelect(init.rootId);
     } catch(error) {if(this.alive)this.report(error);}
   }
   report(error){this.viewport?.setAttribute('aria-busy','false');this.status.textContent=`虚拟树错误：${errorMessage(error)}`;this.onError(error);}
@@ -146,7 +147,8 @@ export class VirtualTreeView {
     const row=event.target.closest?.('[role="treeitem"]');
     if(!row||!this.windowElement.contains(row))return;
     const id=Number(row.dataset.nodeId),index=Number(row.dataset.rowIndex);
-    this.activeId=id;this.activeIndex=index;this.selectedId=id;
+    this.activeId=id;this.activeIndex=index;this.selectedId=id;this.selectedIndex=index;
+    void this.onSelect(id);
     this.refreshSelection();this.viewport.focus({preventScroll:true});
     if(event.target.closest?.('[data-action="toggle"]'))await this.toggleNode(id);
   }
@@ -175,6 +177,11 @@ export class VirtualTreeView {
       const reply=await this.controller.query('TREE_SET_EXPANDED',{nodeId,expanded,expectedEpoch:this.epoch});
       if(!this.alive)return;
       this.epoch=reply.epoch;this.totalVisible=reply.totalVisible;
+      if(!expanded && this.selectedIndex>pivot && this.selectedIndex<=pivot+(previousCount-reply.totalVisible)) {
+        this.selectedId=nodeId;this.selectedIndex=pivot;void this.onSelect(nodeId);
+      } else if(pivot<this.selectedIndex) {
+        this.selectedIndex=Math.max(0,this.selectedIndex+(reply.totalVisible-previousCount));
+      }
       if(pivot<this.activeIndex){
         const delta=reply.totalVisible-previousCount;
         if(!expanded && this.activeIndex<=pivot-delta){
@@ -204,11 +211,34 @@ export class VirtualTreeView {
     const page=await this.controller.query('GET_TREE_WINDOW',{epoch:this.epoch,offset:clamped,limit:1});
     if(!this.alive||page.epoch!==this.epoch||this.activeIndex!==clamped)return;
     this.activeId=page.items[0].nodeId;
-    if(select)this.selectedId=this.activeId;
+    if(select){this.selectedId=this.activeId;this.selectedIndex=clamped;void this.onSelect(this.activeId);}
     this.requestSeq++;this.loaded=null;
     if(this.inFlight)this.queued=true;
     else await this.loadWindow();
     this.refreshSelection();
+  }
+  /** Atomically reveal an RFC 6901 pointer and scroll to its mounted row. */
+  async revealPointer(pointer) {
+    if(!this.alive||this.epoch===null)throw new Error('虚拟树尚未就绪');
+    if(this.mutation)throw new Error('树正在更新，请重试');
+    this.mutation=true;this.requestSeq++;this.loaded=null;
+    try {
+      const reply=await this.controller.query('TREE_REVEAL',{pointer,expectedEpoch:this.epoch});
+      if(!this.alive)return null;
+      this.epoch=reply.epoch;this.totalVisible=reply.totalVisible;
+      this.activeId=reply.nodeId;this.selectedId=reply.nodeId;
+      this.activeIndex=reply.rowIndex;this.selectedIndex=reply.rowIndex;
+      this.spacer.style.height=`${this.totalVisible*this.rowHeight}px`;
+      const viewportRows=Math.max(1,Math.floor((this.viewport.clientHeight||480)/this.rowHeight));
+      this.viewport.scrollTop=Math.max(0,(reply.rowIndex-Math.floor(viewportRows/2))*this.rowHeight);
+      void this.onSelect(reply.nodeId);
+      this.status.textContent=`已定位行 ${reply.rowIndex+1} / ${this.totalVisible}`;
+      return reply;
+    }catch(error){if(this.alive)this.status.textContent=`路径定位失败：${error.message}`;throw error;}
+    finally {
+      this.mutation=false;
+      if(this.alive){this.requestSeq++;this.loaded=null;this.scheduleWindow();}
+    }
   }
   async handleKey(event){
     if(!this.alive||this.mutation||event.altKey||event.ctrlKey||event.metaKey)return;

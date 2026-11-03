@@ -1,6 +1,6 @@
 {
   "name": "jsonparseweb",
-  "version": "0.3.0-alpha.4",
+  "version": "0.3.0-alpha.5",
   "private": true,
   "type": "module",
   "description": "Local-first JSON developer workbench",
