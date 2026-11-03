@@ -10,7 +10,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="top-inner"><div><p class="eyebrow">DEVELOPER WORKBENCH · V0.2</p><h1>JSONParseWeb</h1><p class="subtitle">本地优先的 JSON 解析、验证与可视化工作台</p></div><span class="privacy">● 本地解析 · 不自动上传</span></div>
+    <div class="top-inner"><div><p class="eyebrow">DEVELOPER WORKBENCH · V0.3 M03</p><h1>JSONParseWeb</h1><p class="subtitle">本地优先的 JSON 解析、验证与可视化工作台</p></div><span class="privacy">● 本地解析 · 不自动上传</span></div>
   </header>
   <main class="layout">
     <section class="panel" aria-labelledby="sourceHeading">
@@ -19,10 +19,12 @@
       <textarea id="jsonInput" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder='{"hello": "world", "active": true}'></textarea>
       <div class="buttonbar">
         <button class="primary" id="parseBtn">解析 JSON</button>
+        <button id="cancelBtn" hidden>取消解析</button>
         <button id="formatBtn">格式化</button>
         <button id="loadSampleBtn">加载示例</button>
         <button id="clearBtn">清空</button>
       </div>
+      <label class="engine-option"><input type="checkbox" id="losslessMode"> V0.3 无损解析（Worker 实验模式）</label>
       <div class="upload" id="dropZone">
         <label for="fileInput">拖拽 .json 文件至此，或 <span>选择文件</span></label>
         <input type="file" id="fileInput" accept=".json,application/json">
@@ -44,7 +46,7 @@
       </div>
     </section>
   </main>
-  <footer>JSONParseWeb v0.2 · 默认不发送或保存数据 · <a href="./docs/architecture.md">架构说明</a></footer>
+  <footer>JSONParseWeb v0.3 experimental · 默认不发送或保存数据 · <a href="./docs/architecture.md">架构说明</a></footer>
   <script type="module" src="./src/app.mjs"></script>
 </body>
 </html>
