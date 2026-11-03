@@ -1,4 +1,4 @@
-name: v0.2 quality gates
+name: v0.2 + v0.3 lossless core quality gates
 on:
   push:
   pull_request:
@@ -12,6 +12,8 @@ jobs:
           node-version: '22'
       - run: npm test
       - run: node --check src/app.mjs && node --check src/ui/render.mjs && node --check src/core/json.mjs
+      - run: find packages/json-core -name '*.mjs' -print0 | xargs -0 -n1 node --check
+      - run: npm run bench:core
   backend:
     runs-on: ubuntu-latest
     env:

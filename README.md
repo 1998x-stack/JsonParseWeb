@@ -59,3 +59,25 @@ The browser UI does **not** call Django. Opt-in example: `curl -s -H 'Content-Ty
 - Browser output is bounded to 2,500 tree nodes and 500 table rows. This is a preview, not a virtualized large-dataset viewer.
 - The anonymous optional API is not intended for unbounded internet exposure. For production use configure a reverse proxy with request/time limits, authentication if needed, and distributed throttling. Set `DJANGO_SECRET_KEY` and `DJANGO_ALLOWED_HOSTS`; `DEBUG` defaults to false.
 - Browser E2E should be run on a local HTTP server; the core Node tests and Django integration tests are exercised in CI.
+
+## V0.3-alpha.1 development track (M00–M02)
+
+A new independent lossless core is available in `packages/json-core/`; it is intentionally **not** the browser's active engine yet. This staged migration preserves V0.2 UI while validating syntax and source-fidelity invariants.
+
+```bash
+npm test                 # legacy + v0.3 strict-core regression tests
+npm run test:core        # strict tokenizer / AST / pointer / format only
+npm run bench:core       # deterministic benchmark, no performance SLO implied
+```
+
+Example:
+
+```javascript
+import {parseLossless, formatLossless, resolvePointer} from './packages/json-core/index.mjs';
+const document = parseLossless('{"id":9007199254740993,"id":1.00}');
+console.log(document.stats, document.diagnostics);
+console.log(formatLossless(document)); // preserves both `id` members and exact numbers
+// resolvePointer(document, '/id') intentionally throws AMBIGUOUS_MEMBER.
+```
+
+See `docs/v0.3/REVIEW_AND_ROADMAP.md` and `docs/v0.3/M00-M02_REPORT.md` for the migration, limitations, actual test scope and next deliverables. Full V0.3 Worker and virtualized UI are planned, **not delivered by this batch**.
