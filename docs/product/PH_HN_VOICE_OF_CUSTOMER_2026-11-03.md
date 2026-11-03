@@ -1,7 +1,7 @@
 # JsonParseWeb — Product Hunt × Hacker News 用户声音研究（VoC）
 
 > **版本**：2026-11-03 · **状态**：Desk research / 假设形成，不是代表性市场调查
-> **用途**：作为 \`PRODUCT_V1_PRD.md\` 的需求依据。此文仅用于产品研究，未开展访谈、问卷或真实用户实验。
+> **用途**：作为 `PRODUCT_V1_PRD.md` 的需求依据。此文仅用于产品研究，未开展访谈、问卷或真实用户实验。
 > **范围**：2019–2026 年公开可读的 Product Hunt 产品评论/发布讨论和 Hacker News 帖子；不声称覆盖平台全部评论。
 
 ## 0. 研究方法与证据可信度
@@ -107,7 +107,7 @@
 
 ## 5. 产品方向结论与保留意见
 
-**定位**：\`Evidence-first, lossless, local JSON inspection\`；首先帮开发者找到精度、重复键、类型漂移/缺失等风险，并提供源码定位和可复核证据。
+**定位**：`Evidence-first, lossless, local JSON inspection`；首先帮开发者找到精度、重复键、类型漂移/缺失等风险，并提供源码定位和可复核证据。
 
 **需要避免过度营销的词**：“100MB+”“无敌最快”“所有 JSON 都会发现 Bug”“100% 安全”“保证 Top 5 Product Hunt”“AI 智能修复全部问题”。前述均缺乏当前外部验证。
 
