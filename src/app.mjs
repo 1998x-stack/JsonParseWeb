@@ -116,13 +116,14 @@ async function renderSummary(summary) {
     onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);},
     onLocate:async issue=>{
       if(!isCurrent())return;
+      const span=issue.primary.span;
+      if(span.start<0 || span.end>input.value.length || span.end<span.start)return;
+      // Show exact evidence immediately; do not delay source focus on Worker scrolling.
+      input.focus();input.setSelectionRange(span.start,span.end);
+      announce(t('sourceHighlighted'));
       if(activeVirtualTree&&view==='tree') {
         try{await activeVirtualTree.revealNode(issue.primary.nodeId);}catch(error){if(isCurrent())announce(error.message,true);}
       }
-      if(!isCurrent())return;
-      const span=issue.primary.span;
-      input.focus();input.setSelectionRange(span.start,span.end);
-      announce(t('sourceHighlighted'));
     }});
   await activeFindings.mount();
   if(!currentV03(stamp))return;
