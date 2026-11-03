@@ -1,4 +1,4 @@
-name: v0.3 M04-D navigation + virtual tree quality gates
+name: v0.3 M04 release quality gates
 on:
   push:
   pull_request:
@@ -51,3 +51,21 @@ jobs:
           python tests/e2e/m03_playwright.py
           python tests/e2e/m04_playwright.py
           python tests/e2e/m04d_playwright.py
+          python tests/e2e/m04e_playwright.py
+
+  independent-evaluation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Independent golden and resource evaluator
+        run: M04_REPORT_FILE=m04-quality-report.json node tests/evaluation/m04-evaluator.mjs
+      - name: Save synthetic benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m04-independent-evaluation
+          path: m04-quality-report.json
+          if-no-files-found: warn

@@ -139,3 +139,13 @@ Run `npm test` and `python tests/e2e/m04_playwright.py` with the local HTTP serv
 Open `/?engine=v03&virtual=1` after starting the local static server. Enter an RFC 6901 JSON Pointer (empty input means the root), click **定位节点** to atomically expand ancestors and select the node. Clicking a virtual tree row also updates the detail panel. **复制 JSON Pointer** is disabled for any ambiguous duplicate-member path; **复制完整原文** uses the immutable parsed source span against the current local textarea text (not an additional Worker transfer), preserving exact unsafe-number spelling and whitespace even beyond 64 KiB. **定位源码** selects the exact UTF-16 span in the textarea. The preview is capped at 1,800 UTF-16 code units while exact copy retains the full source span. Browser clipboard permission is required for copying.
 
 The M04 navigation and detail panel is only available in Worker + virtual-tree mode. No document content is sent to a backend. M04-E virtual table and M04-F independent evaluation are future work.
+
+
+## M04-E/F — Lossless virtual table and independent quality gates
+
+Run the static server, open `/?engine=v03&virtual=1`, and select 表格视图.
+The table uses an **ordered lossless AST**, not JS object serialization. Duplicate object keys have distinct occurrence-aware columns; missing properties differ from `null`. All number previews preserve original lexemes, including very large integers, `-0`, and exponent notation. Mixed arrays use 类型 and 值 columns. Only rows/columns visible in the browser are requested from the Worker, with strict protocol bounds (80 rows, 24 columns, 800 cells; UI uses smaller windows).
+
+Run `npm test` for core/Worker/UI geometry tests and `npm run evaluate:m04` for independent synthetic golden and bounded-resource gates. GitHub Actions runs a real Chromium E2E suite (M03–M04-E) and uploads the independent evaluation JSON report. These Node benchmark timings are not browser performance guarantees. The V0.2 browser engine and M03 paged tree remain available as fallback.
+
+See `docs/v0.3/M04_RELEASE_REPORT.md` for evidence, limitations and rollout. JSON Schema, JSONPath queries, editing/undo and multi-document workflows are future V0.4/V0.5 scope.

@@ -3,6 +3,7 @@ import {sample} from './core/sample.mjs';
 import {renderRaw,renderTree,renderTable} from './ui/render.mjs';
 import {createLosslessView} from './ui/lossless-render.mjs';
 import {createVirtualTreeView} from './ui/virtual-tree.mjs';
+import {createVirtualTableView} from './ui/virtual-table.mjs';
 import {createNodeDetailsView} from './ui/node-details.mjs';
 import {WorkerClient} from './worker/client.mjs';
 import {DocumentController} from './document/controller.mjs';
@@ -15,7 +16,7 @@ toggle.disabled=!supportsWorker;
 toggle.checked=supportsWorker && new URLSearchParams(location.search).get('engine')==='v03';
 virtualToggle.checked=new URLSearchParams(location.search).get('virtual')==='1';
 virtualToggle.disabled=!toggle.checked;
-let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeNodeDetails=null;
+let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeVirtualTable=null,activeNodeDetails=null;
 const client=supportsWorker?new WorkerClient({workerFactory:()=>new Worker(new URL('./worker/worker-entry.mjs',import.meta.url),{type:'module'})}):null;
 const controller=client?new DocumentController(client,{docId:'local',onChange:s=>{
   cancelBtn.hidden=!(toggle.checked&&s.phase==='parsing');
@@ -23,7 +24,7 @@ const controller=client?new DocumentController(client,{docId:'local',onChange:s=
 const experimental=()=>Boolean(controller && toggle.checked);
 const announce=(message,error=false)=>{status.textContent=message;status.className=error?'status error':'status';};
 const clearNavigation=()=>{activeNodeDetails?.destroy();activeNodeDetails=null;$('pointerNav').hidden=true;$('nodeDetails').hidden=true;$('pointerFeedback').textContent='';};
-const clearResult=()=>{activeVirtualTree?.destroy();activeVirtualTree=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
+const clearResult=()=>{activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
 function stale() {
   revision++;parsed=null;parsedRevision=-1;
   controller?.setSource(input.value);
@@ -46,7 +47,7 @@ const currentV03=(r)=>experimental()&&controller.revision===r&&controller.snapsh
 async function drawLossless() {
   const snap=controller.snapshot,stamp=snap.revision;
   if(!currentV03(stamp)||!snap.summary?.root)return;
-  activeVirtualTree?.destroy();activeVirtualTree=null;clearNavigation();
+  activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();
   if(view==='raw'){renderRaw(display,input.value);return;}
   if(view==='tree'&&virtualToggle.checked){
     const isCurrent=()=>currentV03(stamp)&&view==='tree'&&virtualToggle.checked;
@@ -57,6 +58,16 @@ async function drawLossless() {
       onSelect:id=>activeNodeDetails?.select(id),
       onError:error=>announce(`虚拟树查询失败：${error.message}`,true)});
     await activeVirtualTree.mount();return;
+  }
+  if(view==='table'&&virtualToggle.checked){
+    const isCurrent=()=>currentV03(stamp)&&view==='table'&&virtualToggle.checked;
+    $('nodeDetails').hidden=false;
+    activeNodeDetails=createNodeDetailsView({target:$('nodeDetails'),controller,sourceInput:input,isCurrent,
+      onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);}});
+    activeVirtualTable=createVirtualTableView({target:display,controller,isCurrent,
+      onSelectNode:id=>activeNodeDetails?.select(id),
+      onError:error=>announce('虚拟表格查询失败：'+error.message,true)});
+    await activeVirtualTable.mount();return;
   }
   const viewAtStart=view,virtualAtStart=virtualToggle.checked;
   const pane=createLosslessView({target:display,controller,isCurrent:()=>currentV03(stamp)&&view===viewAtStart&&virtualToggle.checked===virtualAtStart});
@@ -177,8 +188,8 @@ $('loadSampleBtn').addEventListener('click',()=>{input.value=JSON.stringify(samp
 $('formatBtn').addEventListener('click',()=>{void format();});
 $('downloadBtn').addEventListener('click',download);
 for(const btn of document.querySelectorAll('[data-view]'))btn.addEventListener('click',()=>setView(btn.dataset.view));
-virtualToggle.addEventListener('change',()=>{activeVirtualTree?.destroy();activeVirtualTree=null;clearNavigation();
-  if(experimental()&&controller.snapshot.phase==='ready'&&view==='tree')void drawLossless();});
+virtualToggle.addEventListener('change',()=>{activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();
+  if(experimental()&&controller.snapshot.phase==='ready'&&(view==='tree'||view==='table'))void drawLossless();});
 toggle.addEventListener('change',()=>{virtualToggle.disabled=!toggle.checked;stale();if(input.value.trim())void analyze();else announce(experimental()?'V0.3 Worker 实验模式已启用。':'V0.2 兼容模式已启用。');});
 cancelBtn.addEventListener('click',()=>{if(experimental()){controller.cancel();clearResult();announce('已取消当前解析。');}});
 $('fileInput').addEventListener('change',async e=>{await importFile(e.target.files[0]);e.target.value='';});

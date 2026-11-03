@@ -5,6 +5,7 @@ import {JsonFault} from '../../packages/json-core/diagnostics.mjs';
 import {formatLossless} from '../../packages/json-core/formatter.mjs';
 import {pointerFor, resolvePointer, PointerFault} from '../../packages/json-core/pointer.mjs';
 import {VisibleTreeIndex} from '../../packages/json-core/visible-index.mjs';
+import {TableProjection} from '../../packages/json-core/table-projection.mjs';
 
 const PAGE_SIZE = 100;
 const MAX_PREVIEW = 140;
@@ -84,7 +85,7 @@ export function createWorkerRuntime() {
   };
   const parse = (request, parsed) => {
     // Keep invalid documents too, so the following query returns an explicit validation error.
-    state={docId:request.docId,revision:request.revision,doc:parsed,tree:null};
+    state={docId:request.docId,revision:request.revision,doc:parsed,tree:null,table:null};
     return parsed.ok
       ? {validSyntax:true,root:project(parsed,parsed.rootId),stats:parsed.stats,diagnostics:parsed.diagnostics.slice(0,100)}
       : {validSyntax:false,root:null,stats:null,diagnostics:parsed.diagnostics?.length ? parsed.diagnostics.slice(0,100) : [parsed.error ?? {code:'INVALID_JSON',severity:'error',message:'无法解析 JSON'}]};
@@ -152,6 +153,17 @@ export function createWorkerRuntime() {
       const result = tree.reveal(targetId, expectedEpoch);
       const node = doc.nodes[targetId];
       return {...result, span: {start: node.start, end: node.end}};
+    },
+    GET_TABLE_SCHEMA(request) {
+      const doc=requireState(request);
+      const {offset=0,limit=16}=request.payload??{};
+      if(!state.table)state.table=new TableProjection(doc);
+      return state.table.schema(offset,limit);
+    },
+    GET_TABLE_WINDOW(request) {
+      requireState(request);
+      if(!state.table)throw protocolError('TABLE_NOT_INITIALIZED','请先获取表格 Schema');
+      return state.table.window(request.payload??{});
     },
     GET_NODE(request) {
       const doc = requireState(request), id=request.payload?.id;

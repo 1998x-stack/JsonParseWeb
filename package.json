@@ -1,17 +1,18 @@
 {
   "name": "jsonparseweb",
-  "version": "0.3.0-alpha.5",
+  "version": "0.3.0-rc.1",
   "private": true,
   "type": "module",
   "description": "Local-first JSON developer workbench",
   "scripts": {
     "test": "node --test tests/js/*.test.mjs tests/v03/*.test.mjs",
     "serve": "python3 -m http.server 8080",
-    "check": "npm test && node --check src/app.mjs && node --check src/worker/runtime.mjs && node --check src/worker/client.mjs && node --check src/document/controller.mjs",
+    "check": "npm test && npm run evaluate:m04 && node --check src/app.mjs && node --check src/ui/virtual-table.mjs",
     "test:core": "node --test tests/v03/*.test.mjs",
     "bench:core": "node benchmarks/v03/bench.mjs",
     "test:worker": "node --test tests/v03/worker.test.mjs",
-    "bench:m04": "node benchmarks/v03/visible-index-bench.mjs"
+    "bench:m04": "node benchmarks/v03/visible-index-bench.mjs",
+    "evaluate:m04": "node tests/evaluation/m04-evaluator.mjs"
   },
   "engines": {
     "node": ">=20"

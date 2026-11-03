@@ -30,3 +30,21 @@
 .node-details-actions button{font-size:.77rem;padding:.45rem .65rem}
 .node-details-actions button:disabled{cursor:not-allowed;opacity:.5}
 @media(max-width:500px){.pointer-controls{flex-direction:column;align-items:stretch}}
+
+/* M04-E virtual grid, bounded DOM rows and columns. */
+.virtual-table-viewport{height:450px;max-height:55vh;overflow:auto;position:relative;border:1px solid #d8e1ee;background:#fff;outline-offset:2px;contain:layout paint}
+.virtual-table-spacer{position:relative;min-width:100%;min-height:100%}
+.virtual-table-window,.virtual-table-header{position:absolute;top:0;left:0;width:100%;pointer-events:none}
+.virtual-table-header{z-index:3;height:36px;background:#eaf1fb}
+.virtual-table-row,.virtual-table-head-row{position:absolute;left:0;height:34px;width:100%;pointer-events:none}
+.virtual-table-head-row{height:36px}
+.virtual-table-cell{box-sizing:border-box;position:absolute;top:0;height:34px;width:190px;line-height:33px;border-right:1px solid #e2e7f0;border-bottom:1px solid #edf0f4;padding:0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:auto;font-size:12px;font-family:ui-monospace,Consolas,monospace}
+.virtual-table-head-row .virtual-table-cell{height:36px;line-height:35px;font-weight:650;background:#eaf1fb}
+.virtual-table-cell.virtual-table-index{width:74px;text-align:right;background:#f3f6fc;color:#62738b;z-index:2}
+.virtual-table-cell[data-cell-node]{cursor:pointer}
+.virtual-table-cell[data-cell-node]:hover{background:#eaf3ff}
+.virtual-table-cell.is-selected{background:#dceafe;font-weight:600}
+.virtual-table-cell.is-missing{color:#9aa4b6;font-style:italic}
+.virtual-table-cell.cell-number{color:#a45322}
+.virtual-table-cell.cell-null{color:#646c79}
+.virtual-table-status{font-size:.8rem;color:#536782;margin:.45rem 0}
