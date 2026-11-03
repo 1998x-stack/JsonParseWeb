@@ -3,7 +3,7 @@
 - **状态**：Proposed / research-backed direction，尚未实施 V1 功能
 - **产品 Owner**：待确定
 - **研究输入**：[PH_HN_VOICE_OF_CUSTOMER_2026-11-03.md](PH_HN_VOICE_OF_CUSTOMER_2026-11-03.md)
-- **技术输入**：当前 \`main\` 为 V0.2；V0.3 M04 核心能力位于尚未合并的 [PR #9](https://github.com/1998x-stack/JsonParseWeb/pull/9)
+- **技术输入**：当前 `main` 为 V0.2；V0.3 M04 核心能力位于尚未合并的 [PR #9](https://github.com/1998x-stack/JsonParseWeb/pull/9)
 - **原则**：更深的用户价值，而非更多菜单；独立证据判断成败；公开源码与可重复测试优于自我评分
 - **定位**：Find hidden JSON problems. Inspect the source evidence. Keep your data local.
 
@@ -14,7 +14,7 @@
 **核心 Job To Be Done**：
 > 当我拿到陌生或变化的 JSON API 响应，希望在不上传敏感数据的情况下，快速判断“哪里有潜在错误 / 为什么有风险 / 证据在原文哪里”，而不是先翻阅几万行或写 jq 脚本。
 
-**首发 One-liner**：\`A private, lossless JSON debugger that finds hidden data problems and proves where they are.\`
+**首发 One-liner**：`A private, lossless JSON debugger that finds hidden data problems and proves where they are.`
 
 ### Goal beyond the goal
 1. 让 JSON 可读（行业已满足；不是差异化）。
@@ -47,15 +47,15 @@
 ## 4. 信息架构与第一屏
 
 ### Routes
-- \`/\`：英文为默认的 Product Landing。单句话价值、三个可点击可复现 Demo、隐私证据入口、代码与使用示例。避免自动轮播。
-- \`/app\`：Workbench。无需账户、可直接 Paste、Drop、Try a Sample。
-- \`/privacy\`：威胁模型、网络/存储行为、如何独立复现验证。
-- \`/examples\`：仅内置公开/合成的三个可重现故障用例。
-- \`/docs\`：精度与重复键解释、证据语义、限制与 API，前提是有清晰可导航的静态内容。
+- `/`：英文为默认的 Product Landing。单句话价值、三个可点击可复现 Demo、隐私证据入口、代码与使用示例。避免自动轮播。
+- `/app`：Workbench。无需账户、可直接 Paste、Drop、Try a Sample。
+- `/privacy`：威胁模型、网络/存储行为、如何独立复现验证。
+- `/examples`：仅内置公开/合成的三个可重现故障用例。
+- `/docs`：精度与重复键解释、证据语义、限制与 API，前提是有清晰可导航的静态内容。
 
 ### Workbench 信息层级
 
-\`\`\`
+```
 Header: Logo | Local / Offline evidence | Documentation | GitHub
 Input:  Paste JSON [drop local file] [Try sample]  [Analyze]
 Summary: 2 findings · 1 warning · 1 observation | 2 MiB limit info
@@ -64,17 +64,17 @@ Issue list: [type] [finding] [impact + limitations] [locate source] [copy eviden
 Source: split editor + source highlight, synchronized with selected issue
 Detail: raw lexeme | decoded value preview | path/occurrence | span | copy exact
 Footer: browser-only disclosure | version | source link | feedback
-\`\`\`
+```
 
 On mobile: Input and Issues first; Tree and Source as tabbed panes, avoid unusable 3-column layout.
 
 ### First-time flow — 30 seconds
-1. Landing CTA \`Try a precision trap\` (no signup, no external content).
-2. Loads a synthetic sample \`{"orderId":9007199254740993,"status":"ok"}\`.
-3. Immediately parses and shows \`NUMERIC_PRECISION_RISK\` with exact token and explanation; label "Warning for JS consumers", NOT "invalid JSON".
-4. Click \`Locate evidence\`: highlight original span; Tree shows same raw lexeme.
-5. Click \`Copy exact value\` or \`Copy redacted example\`, no serialization through native Number.
-6. Optional switch \`Duplicate key\`, \`Schema drift\`.
+1. Landing CTA `Try a precision trap` (no signup, no external content).
+2. Loads a synthetic sample `{"orderId":9007199254740993,"status":"ok"}`.
+3. Immediately parses and shows `NUMERIC_PRECISION_RISK` with exact token and explanation; label "Warning for JS consumers", NOT "invalid JSON".
+4. Click `Locate evidence`: highlight original span; Tree shows same raw lexeme.
+5. Click `Copy exact value` or `Copy redacted example`, no serialization through native Number.
+6. Optional switch `Duplicate key`, `Schema drift`.
 
 **First-value contract**: the user should be able to answer “what's wrong, where, why it matters” without understanding AST, SourceSpan, Worker or virtualized rows.
 
@@ -107,7 +107,7 @@ On mobile: Input and Issues first; Tree and Source as tabbed panes, avoid unusab
 
 ### 6.1 Unified Finding (不可把提示写死为错误)
 
-\`\`\`ts
+```ts
 type Severity = 'error' | 'warning' | 'info';
 type Basis = 'deterministic' | 'sample_observation' | 'heuristic';
 interface Finding {
@@ -126,27 +126,27 @@ interface Finding {
   suggestedActions: Array<'LOCATE'|'COPY_EXACT'|'COPY_REDACTED'|'COMPARE'>;
   acknowledged?: boolean;         // UI only, never changes source
 }
-\`\`\`
+```
 
 Worker owns AST and issues. UI sees bounded finding summaries; requesting issue evidence by ID returns exact SourceSpan and metadata, not full large source. Run analysis on a versioned document, not on mutable DOM textarea state. Source reads validate revision and span.
 
 ### 6.2 P0 Rule R-01: precision risk
 - Trigger: raw JSON number token cannot be represented as a safe integer under JS Number (integer lexeme with magnitude > 2^53-1), or opt-in precision-risk rule for decimal/exponents where Number round-trip fails under documented comparator.
-- Severity \`warning\` / basis \`deterministic\` for unsafe-integer path; decimal loss *requires a separately tested exact semantics*, do not conflate with syntax invalidity.
-- Show \`rawNumber\`, concise why, affected path (if unique), SourceSpan and copy raw token. Never show a rounded JS Number as authoritative data.
+- Severity `warning` / basis `deterministic` for unsafe-integer path; decimal loss *requires a separately tested exact semantics*, do not conflate with syntax invalidity.
+- Show `rawNumber`, concise why, affected path (if unique), SourceSpan and copy raw token. Never show a rounded JS Number as authoritative data.
 - Nonscope: no automatic conversion of arbitrary numeric JSON into strings; that changes API types.
 
 ### 6.3 P0 Rule R-02: duplicate key
-- Detect by **decoded** object key (e.g. \`"a"\` and \`"\\u0061"\` are duplicates) within the same object; source member order preserved.
-- Show both occurrences and separate key-token spans; \`pointer=null\` if any segment ambiguous; use NodeId + occurrence for internal selection.
-- Severity \`warning\` / deterministic; configurable strict mode \`error\`. Do not silently select first/last member.
+- Detect by **decoded** object key (e.g. `"a"` and `"\\u0061"` are duplicates) within the same object; source member order preserved.
+- Show both occurrences and separate key-token spans; `pointer=null` if any segment ambiguous; use NodeId + occurrence for internal selection.
+- Severity `warning` / deterministic; configurable strict mode `error`. Do not silently select first/last member.
 - No auto-fix without explicit choice and preview: selecting a duplicate to delete is a destructive edit and belongs to later version.
 
 ### 6.4 P0 Rule R-03: observational schema drift
-- Mode A (single array): only for comparable object elements; collect observed per-field \`present\`, \`missing\`, \`null\`, \`type distribution\`, \`occurrence duplicates\`, and small **source-linked examples**.
+- Mode A (single array): only for comparable object elements; collect observed per-field `present`, `missing`, `null`, `type distribution`, `occurrence duplicates`, and small **source-linked examples**.
 - Mode B (multiple documents): user explicitly adds samples assumed same endpoint/context; compare observed field presence/type distributions. Never claim request-scope equivalence without user statement.
-- \`MISSING_FIELD\`, \`TYPE_VARIANCE\`, \`NULL_OUTLIER\` are initially **info / sample_observation**, never automatic “bug” or “schema violation”.
-- Required metadata: N eligible objects, counts, denominator, detection strategy and selection biases; show \`Observed 1/20\`, not \`1% of all production data\`.
+- `MISSING_FIELD`, `TYPE_VARIANCE`, `NULL_OUTLIER` are initially **info / sample_observation**, never automatic “bug” or “schema violation”.
+- Required metadata: N eligible objects, counts, denominator, detection strategy and selection biases; show `Observed 1/20`, not `1% of all production data`.
 - If <3 eligible examples: avoid anomaly flags; show distribution only. If same property has 2+ types but only 2 samples, explain low sample support.
 - User can ignore/mark expected per session; don't retain local data unless explicitly asked.
 - Duplicate keys count by occurrence, not by object map collapsing.
@@ -169,15 +169,15 @@ Worker owns AST and issues. UI sees bounded finding summaries; requesting issue 
 
 ### Two-response Diff
 - Compare ordered AST, with policy options: object-key order ignored by default for semantic comparison; duplicate-key positions preserved and flagged; array order significant by default.
-- Highlight \`added\`, \`removed\`, \`changed_type\`, \`changed_value\`, \`precision_sensitive\`; distinguish \`null\` from missing.
-- Labels \`left\`/\`right\` with clear interpretation; no arbitrary color-only meaning.
+- Highlight `added`, `removed`, `changed_type`, `changed_value`, `precision_sensitive`; distinguish `null` from missing.
+- Labels `left`/`right` with clear interpretation; no arbitrary color-only meaning.
 - No mutating merge or automatic patch at V1.
 
 ### Export
-- \`Copy exact raw\`: source span exact; no JSON.stringify.
-- \`Copy finding report\`: local Markdown/JSON structured summary, with redaction preview.
-- \`Export table CSV/TSV\`: only defined for flat compatible scalar cells; duplicate-column naming is explicit and optional; high precision exports use raw numeric strings, not silent Number.
-- \`Privacy-safe share\`: **no raw payload URL**. Generate a local sanitized example after user preview; do not promise all secrets are detected. Default allowlist-only sample or synthetic fixtures, no “automatic redaction guarantees”.
+- `Copy exact raw`: source span exact; no JSON.stringify.
+- `Copy finding report`: local Markdown/JSON structured summary, with redaction preview.
+- `Export table CSV/TSV`: only defined for flat compatible scalar cells; duplicate-column naming is explicit and optional; high precision exports use raw numeric strings, not silent Number.
+- `Privacy-safe share`: **no raw payload URL**. Generate a local sanitized example after user preview; do not promise all secrets are detected. Default allowlist-only sample or synthetic fixtures, no “automatic redaction guarantees”.
 - If sensitive source remains in the report, block upload/share; local download allowed with warning and explicit confirmation.
 
 ## 8. Error and empty states
@@ -185,12 +185,12 @@ Worker owns AST and issues. UI sees bounded finding summaries; requesting issue 
 | Situation | User-visible response | Internal contract |
 |---|---|---|
 | Empty input | “Paste JSON or try a sample” | no parse |
-| Malformed input | first offending token, line/column, locate | \`SYNTAX_ERROR\` |
-| UTF-8 invalid file | explain invalid byte encoding, retain original file untouched | \`INVALID_UTF8\` |
-| 2MiB exceeded | show actual size and supported cap, suggest future large-file workflow | \`SIZE_LIMIT\` before AST |
-| 100k nodes/depth limit | exact named resource limit, no frozen page | \`NODE_LIMIT\`/\`DEPTH_LIMIT\` |
+| Malformed input | first offending token, line/column, locate | `SYNTAX_ERROR` |
+| UTF-8 invalid file | explain invalid byte encoding, retain original file untouched | `INVALID_UTF8` |
+| 2MiB exceeded | show actual size and supported cap, suggest future large-file workflow | `SIZE_LIMIT` before AST |
+| 100k nodes/depth limit | exact named resource limit, no frozen page | `NODE_LIMIT`/`DEPTH_LIMIT` |
 | Huge scalar preview | truncate display but allow exact-copy within bounded local source | no raw mutation |
-| Pointer points to duplicate | two clickable occurrences, no fake path | \`AMBIGUOUS_MEMBER\` |
+| Pointer points to duplicate | two clickable occurrences, no fake path | `AMBIGUOUS_MEMBER` |
 | Worker terminated/crashed | reparse CTA; source remains in editor | no stale result |
 | No findings | state rule coverage + limitations | never claim "safe" |
 | Offline reload | if offline bundle installed, core works; else explanatory offline error | no silent network |
@@ -226,13 +226,13 @@ Worker owns AST and issues. UI sees bounded finding summaries; requesting issue 
 
 ## 11. UX acceptance stories (Gherkin-like)
 
-**US-01 Precision**: Given \`{"id":9007199254740993}\`, when user clicks Try Sample, then \`NUMERIC_PRECISION_RISK\` appears with raw token unchanged; Locate selects exact characters; Copy Exact yields 9007199254740993.
+**US-01 Precision**: Given `{"id":9007199254740993}`, when user clicks Try Sample, then `NUMERIC_PRECISION_RISK` appears with raw token unchanged; Locate selects exact characters; Copy Exact yields 9007199254740993.
 
-**US-02 Escaped duplicate**: Given \`{"a":1,"\\u0061":2}\`, then two members remain, warning has two source spans; \`/a\` unresolved as ambiguous; neither is silently removed.
+**US-02 Escaped duplicate**: Given `{"a":1,"\\u0061":2}`, then two members remain, warning has two source spans; `/a` unresolved as ambiguous; neither is silently removed.
 
-**US-03 Drift not certainty**: Given 8 objects with \`price:number\` and 2 with \`price:string\`, then \`TYPE_VARIANCE\` shows 8/10 vs 2/10 and explicit “observed in supplied samples”; no claim about API schema.
+**US-03 Drift not certainty**: Given 8 objects with `price:number` and 2 with `price:string`, then `TYPE_VARIANCE` shows 8/10 vs 2/10 and explicit “observed in supplied samples”; no claim about API schema.
 
-**US-04 Missing vs null**: Given \`[{"a":null},{}]\`, UI distinguishes a null value from field absence; reports show each path and original source.
+**US-04 Missing vs null**: Given `[{"a":null},{}]`, UI distinguishes a null value from field absence; reports show each path and original source.
 
 **US-05 Local privacy**: Given a synthetic secret marker in JSON, on parse/search/export without explicit share, no request includes its bytes and no persistent store contains them, verified in browser test.
 
@@ -244,7 +244,7 @@ Worker owns AST and issues. UI sees bounded finding summaries; requesting issue 
 
 ## 12. Prioritization & dependency map
 
-\`\`\`
+```
 V0.3 PR #9 accepted and reviewed
   -> P01 Product shell, en-US/zh-CN, demo and default engine
   -> P02 Finding Engine (precision, duplicates, evidence)
@@ -252,7 +252,7 @@ V0.3 PR #9 accepted and reviewed
   -> P04 UX/report/privacy proof + usability tests
   -> P05 Production deploy, release evaluation, PH assets
   -> P1: Compare / Search / CSV / Extensions based on demand evidence
-\`\`\`
+```
 
 Minimum first release must include Product shell + Findings + at least one multi-sample drift demonstration + actual privacy proof. Product Hunt submission should not be attempted on engineering alpha solely because CI is green.
 
@@ -266,8 +266,8 @@ Minimum first release must include Product shell + Findings + at least one multi
 
 ## 14. Launch narrative
 
-Name: \`JsonParseWeb\` (provisional; check brand/trademark before alternate naming).
-Tagline draft: \`Find hidden JSON bugs without uploading your data\`.
+Name: `JsonParseWeb` (provisional; check brand/trademark before alternate naming).
+Tagline draft: `Find hidden JSON bugs without uploading your data`.
 Story: ordinary parsers can silently round large integers or overwrite duplicate members, while visual viewers can be pretty but unhelpful. This workbench keeps the original evidence and helps developers inspect potential data issues, privately.
 Demonstrate real product, not mockups; show actual network-proof procedure.
 No incentivized upvotes, no automated comments, no claim of PH rankings before actual launch.
