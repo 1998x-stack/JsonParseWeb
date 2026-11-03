@@ -20,4 +20,4 @@ for(const size of sizes) {
   reports.push({fixture:`array-${size}`,bytes:result.stats.size_bytes,nodes:result.stats.nodes,
     parseMsP50:+measurements[2].toFixed(2),parseMsP95:+measurements[4].toFixed(2)});
 }
-console.log(JSON.stringify({version:'0.3.0-alpha.1',node:process.version,measurements:reports},null,2));
+console.log(JSON.stringify({version:'0.3.0-alpha.2',node:process.version,measurements:reports},null,2));

@@ -1,4 +1,4 @@
-# JSONParseWeb v0.2 — local-first JSON Developer Workbench
+# JSONParseWeb v0.3 alpha.2 — local-first JSON Developer Workbench
 
 JSONParseWeb is a standalone browser application for JSON validation and exploration with an optional Django API. **Pasted or uploaded JSON remains in the browser by default.** No bundler, frontend dependency, database, account or analytics service is necessary.
 
@@ -81,3 +81,28 @@ console.log(formatLossless(document)); // preserves both `id` members and exact 
 ```
 
 See `docs/v0.3/REVIEW_AND_ROADMAP.md` and `docs/v0.3/M00-M02_REPORT.md` for the migration, limitations, actual test scope and next deliverables. Full V0.3 Worker and virtualized UI are planned, **not delivered by this batch**.
+
+## V0.3 M03 experimental browser Worker mode
+
+- Enable **V0.3 无损解析（Worker 实验模式）** or load `/?engine=v03`.
+- This is a staged migration: the default view still uses V0.2 for rollback. V0.3 Worker mode keeps the AST inside the worker and requests bounded child projections (40 entries per UI page, 100 per protocol page).
+- V0.3 numeric previews and formatter retain the exact original source lexemes including `9007199254740993`, `1.00`, `-0`, and large exponents. Duplicate properties remain distinct and produce diagnostics.
+- Editing or canceling terminates the current Worker; request/revision checks prevent late responses from overwriting the current document.
+- File imports in V0.3 are transferred as ArrayBuffers and decoded with strict UTF-8 validation in the Worker; malformed encoding is rejected.
+- The tree currently uses **paged expansion** (maximum 500 mounted rows), **not true viewport virtualization**. M04 will replace it with a virtualized tree and indexed navigation.
+- The experimental table renders a paged array preview (index, type, raw preview); rich column handling remains M04.
+- No browser code automatically contacts the optional Django backend. Worker initialization and all parsing remain same-origin and local.
+
+### M03 checks
+
+```bash
+npm test                         # V0.2, strict core, Worker threads, controller
+npm run test:worker
+npm run bench:core
+python -m http.server 8765       # separate terminal for browser E2E
+python tests/e2e/m03_playwright.py  # requires pip install playwright + playwright install chromium
+```
+
+Browser E2E with Chromium was prevented by local environment network policy in the development container; it runs as a dedicated job in GitHub Actions. Do not mark E2E passed unless its CI job reports success.
+
+See `docs/v0.3/M03_REPORT.md` for the review, operating model and outstanding M04 work.
