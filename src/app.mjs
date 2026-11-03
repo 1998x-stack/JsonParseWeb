@@ -7,16 +7,27 @@ import {createVirtualTableView} from './ui/virtual-table.mjs';
 import {createNodeDetailsView} from './ui/node-details.mjs';
 import {WorkerClient} from './worker/client.mjs';
 import {DocumentController} from './document/controller.mjs';
+import {createFindingsPanel} from './ui/findings-panel.mjs';
+import {PRODUCT_SAMPLES,applyStaticLocale,translate} from './product/i18n.mjs';
 
 const $=id=>document.getElementById(id);
 const input=$('jsonInput'),display=$('jsonDisplay'),status=$('status');
 const toggle=$('losslessMode'),virtualToggle=$('virtualTreeMode'),cancelBtn=$('cancelBtn');
 const supportsWorker=typeof Worker!=='undefined';
+const params=new URLSearchParams(location.search);
+// Explicit engine queries preserve the M03/M04 regression harness and opt-out.
+const legacyQuery=params.has('engine');
+document.body.classList.toggle('legacy-query',legacyQuery);
+$('advancedEngines').open=legacyQuery;
+let locale=params.get('lang')==='zh'||(!params.has('lang')&&legacyQuery)?'zh':'en';
+$('languageSelect').value=locale;
+applyStaticLocale(locale);
+const t=key=>translate(locale,key);
 toggle.disabled=!supportsWorker;
-toggle.checked=supportsWorker && new URLSearchParams(location.search).get('engine')==='v03';
-virtualToggle.checked=new URLSearchParams(location.search).get('virtual')==='1';
+toggle.checked=supportsWorker && params.get('engine')!=='legacy';
+virtualToggle.checked=params.has('virtual') ? params.get('virtual')==='1' : !legacyQuery;
 virtualToggle.disabled=!toggle.checked;
-let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeVirtualTable=null,activeNodeDetails=null;
+let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeVirtualTable=null,activeNodeDetails=null,activeFindings=null;
 const client=supportsWorker?new WorkerClient({workerFactory:()=>new Worker(new URL('./worker/worker-entry.mjs',import.meta.url),{type:'module'})}):null;
 const controller=client?new DocumentController(client,{docId:'local',onChange:s=>{
   cancelBtn.hidden=!(toggle.checked&&s.phase==='parsing');
@@ -24,11 +35,11 @@ const controller=client?new DocumentController(client,{docId:'local',onChange:s=
 const experimental=()=>Boolean(controller && toggle.checked);
 const announce=(message,error=false)=>{status.textContent=message;status.className=error?'status error':'status';};
 const clearNavigation=()=>{activeNodeDetails?.destroy();activeNodeDetails=null;$('pointerNav').hidden=true;$('nodeDetails').hidden=true;$('pointerFeedback').textContent='';};
-const clearResult=()=>{activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
+const clearResult=()=>{activeFindings?.destroy();activeFindings=null;activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
 function stale() {
   revision++;parsed=null;parsedRevision=-1;
   controller?.setSource(input.value);
-  clearResult();announce('内容已修改，请重新解析。');
+  clearResult();announce(t('modified'));
 }
 function showStatistics(stats) {
   $('stats').hidden=false;
@@ -52,9 +63,9 @@ async function drawLossless() {
   if(view==='tree'&&virtualToggle.checked){
     const isCurrent=()=>currentV03(stamp)&&view==='tree'&&virtualToggle.checked;
     $('pointerNav').hidden=false;$('nodeDetails').hidden=false;
-    activeNodeDetails=createNodeDetailsView({target:$('nodeDetails'),controller,sourceInput:input,isCurrent,
+    activeNodeDetails=createNodeDetailsView({target:$('nodeDetails'),controller,sourceInput:input,isCurrent,locale,
       onMessage:(message,error=false)=>{if(isCurrent()){$('pointerFeedback').textContent=message;if(error)announce(message,true);}}});
-    activeVirtualTree=createVirtualTreeView({target:display,controller,isCurrent,
+    activeVirtualTree=createVirtualTreeView({target:display,controller,isCurrent,locale,
       onSelect:id=>activeNodeDetails?.select(id),
       onError:error=>announce(`虚拟树查询失败：${error.message}`,true)});
     await activeVirtualTree.mount();return;
@@ -62,11 +73,11 @@ async function drawLossless() {
   if(view==='table'&&virtualToggle.checked){
     const isCurrent=()=>currentV03(stamp)&&view==='table'&&virtualToggle.checked;
     $('nodeDetails').hidden=false;
-    activeNodeDetails=createNodeDetailsView({target:$('nodeDetails'),controller,sourceInput:input,isCurrent,
-      onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);}});
+    activeNodeDetails=createNodeDetailsView({target:$('nodeDetails'),controller,sourceInput:input,isCurrent,locale,
+      onMessage:(message,error=false)=>{if(isCurrent()){announce(message,error);}}});
     activeVirtualTable=createVirtualTableView({target:display,controller,isCurrent,
       onSelectNode:id=>activeNodeDetails?.select(id),
-      onError:error=>announce('虚拟表格查询失败：'+error.message,true)});
+      onError:error=>announce(`虚拟表格查询失败：${error.message}`,true)});
     await activeVirtualTable.mount();return;
   }
   const viewAtStart=view,virtualAtStart=virtualToggle.checked;
@@ -82,6 +93,7 @@ function draw() {
   else renderRaw(display,parsed.source);
 }
 function analyzeLegacy() {
+  if(!supportsWorker&&!legacyQuery){clearResult();announce('This browser does not support Web Workers. Lossless inspection is unavailable; source was not parsed.',true);return;}
   const output=parseDocument(input.value);
   parsed=output;parsedRevision=revision;
   if(!output.ok){clearResult();announce(`解析失败：${output.error}`,true);return;}
@@ -93,17 +105,34 @@ function analyzeLegacy() {
 }
 async function renderSummary(summary) {
   if(!experimental()||!summary)return;
-  if(!summary.validSyntax){clearResult();showDiagnostics(summary.diagnostics);announce('无损解析失败，请查看诊断详情。',true);return;}
+  if(!summary.validSyntax){clearResult();showDiagnostics(summary.diagnostics);announce(t('invalid'),true);return;}
   showStatistics(summary.stats);showDiagnostics(summary.diagnostics);
   const stamp=controller.revision;
   await drawLossless();
   if(!currentV03(stamp))return;
-  announce(`无损解析成功 · ${summary.stats.size_bytes} 字节 · ${summary.stats.nodes} 节点${summary.diagnostics.length?` · ${summary.diagnostics.length} 条诊断`:''}`);
+  const isCurrent=()=>currentV03(stamp);
+  activeFindings?.destroy();
+  activeFindings=createFindingsPanel({target:$('issuesPanel'),controller,isCurrent,getLocale:()=>locale,
+    onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);},
+    onLocate:async issue=>{
+      if(!isCurrent())return;
+      const span=issue.primary.span;
+      if(span.start<0 || span.end>input.value.length || span.end<span.start)return;
+      // Show exact evidence immediately; do not delay source focus on Worker scrolling.
+      input.focus();input.setSelectionRange(span.start,span.end);
+      announce(t('sourceHighlighted'));
+      if(activeVirtualTree&&view==='tree') {
+        try{await activeVirtualTree.revealNode(issue.primary.nodeId);}catch(error){if(isCurrent())announce(error.message,true);}
+      }
+    }});
+  await activeFindings.mount();
+  if(!currentV03(stamp))return;
+  announce(`${t('inspectSuccess')} · ${summary.stats.size_bytes} ${locale==='zh'?'字节':'bytes'} · ${summary.stats.nodes} ${locale==='zh'?'节点':'nodes'} · ${summary.inspection?.total??0} ${locale==='zh'?'条发现':'findings'}`);
 }
 async function analyze() {
   if(!experimental())return analyzeLegacy();
   const stamp=controller.revision;
-  clearResult();announce('Worker 正在解析 JSON…');
+  clearResult();announce(t('inspectProgress'));
   try{
     const summary=await controller.parse();
     if(stamp!==controller.revision||!experimental())return;
@@ -184,7 +213,7 @@ $('pointerNav').addEventListener('submit',async event=>{
 $('parseBtn').addEventListener('click',()=>{void analyze();});
 input.addEventListener('input',stale);
 $('clearBtn').addEventListener('click',()=>{input.value='';stale();announce('已清空。');});
-$('loadSampleBtn').addEventListener('click',()=>{input.value=JSON.stringify(sample,null,2);stale();void analyze();});
+$('loadSampleBtn').addEventListener('click',()=>{input.value=legacyQuery?JSON.stringify(sample,null,2):PRODUCT_SAMPLES.precision;stale();void analyze();});
 $('formatBtn').addEventListener('click',()=>{void format();});
 $('downloadBtn').addEventListener('click',download);
 for(const btn of document.querySelectorAll('[data-view]'))btn.addEventListener('click',()=>setView(btn.dataset.view));
@@ -198,5 +227,19 @@ zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag
 zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
 zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');void importFile(e.dataTransfer.files[0]);});
 input.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();void analyze();}});
+for(const button of document.querySelectorAll('[data-demo]'))button.addEventListener('click',()=>{
+  input.value=PRODUCT_SAMPLES[button.dataset.demo];stale();
+  $('workbench').scrollIntoView({behavior:'smooth',block:'start'});
+  if(!experimental()&&supportsWorker){toggle.checked=true;virtualToggle.checked=true;virtualToggle.disabled=false;stale();}
+  void analyze();
+});
+$('trySampleHero').addEventListener('click',()=>document.querySelector('[data-demo="precision"]').click());
+$('languageSelect').addEventListener('change',event=>{
+  locale=event.target.value;applyStaticLocale(locale);
+  activeFindings?.render();
+  // Rebuild view chrome while retaining parsed state and all source bytes.
+  if(experimental()&&controller.snapshot.phase==='ready')void drawLossless();
+  if(!input.value)announce(t('resultEmpty'));
+});
 window.addEventListener('pagehide',()=>controller?.destroy(),{once:true});
-announce(experimental()?'V0.3 无损解析实验模式 · Worker 本地执行。':'V0.2 兼容模式 · 数据不会自动上传。');
+announce(!input.value?t('resultEmpty'):(experimental()?t('inspectProgress'):t('rawNotChanged')));

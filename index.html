@@ -1,59 +1,77 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="JSONParseWeb - 隐私优先的本地 JSON 解析、验证、浏览工作台">
+  <meta name="description" content="Find hidden JSON data problems. Detect unsafe integers and duplicate keys with exact, local source evidence. No account or automatic uploads.">
   <meta name="referrer" content="no-referrer">
-  <title>JSONParseWeb · JSON Developer Workbench</title>
+  <meta name="color-scheme" content="light">
+  <meta property="og:title" content="JsonParseWeb — Find what your JSON is hiding">
+  <meta property="og:description" content="A private, lossless JSON debugger with evidence-first diagnostics.">
+  <title>JsonParseWeb · Find hidden JSON issues</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="top-inner"><div><p class="eyebrow">DEVELOPER WORKBENCH · V0.3 M04-E/F</p><h1>JSONParseWeb</h1><p class="subtitle">本地优先的 JSON 解析、验证与可视化工作台</p></div><span class="privacy">● 本地解析 · 不自动上传</span></div>
+  <header class="site-header">
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="JsonParseWeb home"><span class="brand-mark">{ }</span><span>JsonParse<span class="brand-accent">Web</span></span></a>
+      <div class="nav-actions">
+        <a class="nav-link" href="#workbench" data-i18n="navWorkbench">Open workbench</a>
+        <a class="nav-link" href="https://github.com/1998x-stack/JsonParseWeb" rel="noopener noreferrer" target="_blank" data-i18n="navGithub">GitHub</a>
+        <label class="locale-picker" for="languageSelect"><span data-i18n="language">Language</span><select id="languageSelect" aria-label="Language"><option value="en">English</option><option value="zh">中文</option></select></label>
+      </div>
+    </nav>
   </header>
-  <main class="layout">
-    <section class="panel" aria-labelledby="sourceHeading">
-      <div class="panel-heading"><div><p class="eyebrow dark">01 / SOURCE</p><h2 id="sourceHeading">输入 JSON</h2></div><span class="hint">Ctrl / ⌘ + Enter</span></div>
-      <label class="sr-only" for="jsonInput">JSON 文本</label>
-      <textarea id="jsonInput" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder='{"hello": "world", "active": true}'></textarea>
-      <div class="buttonbar">
-        <button class="primary" id="parseBtn">解析 JSON</button>
-        <button id="cancelBtn" hidden>取消解析</button>
-        <button id="formatBtn">格式化</button>
-        <button id="loadSampleBtn">加载示例</button>
-        <button id="clearBtn">清空</button>
-      </div>
-      <label class="engine-option"><input type="checkbox" id="losslessMode"> V0.3 无损解析（Worker 实验模式）</label>
-      <label class="engine-option"><input type="checkbox" id="virtualTreeMode"> M04 虚拟树 / 表格（实验模式）</label>
-      <div class="upload" id="dropZone">
-        <label for="fileInput">拖拽 .json 文件至此，或 <span>选择文件</span></label>
-        <input type="file" id="fileInput" accept=".json,application/json">
-        <p>文件仅在浏览器内读取 · 限制 2 MiB</p>
-      </div>
-    </section>
-    <section class="panel" aria-labelledby="outputHeading">
-      <div class="panel-heading"><div><p class="eyebrow dark">02 / RESULT</p><h2 id="outputHeading">解析结果</h2></div><button id="downloadBtn">导出原文</button></div>
-      <div id="status" class="status" role="status" aria-live="polite"></div>
-      <form id="pointerNav" class="pointer-nav" hidden aria-label="JSON Pointer 定位">
-        <label for="pointerInput">JSON Pointer</label>
-        <div class="pointer-controls"><input id="pointerInput" type="text" spellcheck="false" placeholder="/users/0/id" aria-describedby="pointerFeedback"><button id="navigatePointerBtn" type="submit">定位节点</button></div>
-        <p id="pointerFeedback" class="pointer-feedback" role="status" aria-live="polite"></p>
-      </form>
-      <nav class="tabs" aria-label="展示模式"><button class="selected" data-view="tree" aria-pressed="true">树形视图</button><button data-view="raw" aria-pressed="false">原始数据</button><button data-view="table" aria-pressed="false">表格视图</button></nav>
-      <div id="jsonDisplay" class="output" aria-label="JSON 解析展示"><p class="muted">解析结果将在此显示。</p></div>
-      <section id="nodeDetails" class="node-details" aria-label="当前节点详情" hidden></section>
-      <div id="warnings" class="warnings" aria-live="polite"></div>
-      <div id="stats" class="stats" hidden>
-        <div><span>属性数</span><strong id="keys">0</strong></div>
-        <div><span>最大深度</span><strong id="depth">0</strong></div>
-        <div><span>数组</span><strong id="arrays">0</strong></div>
-        <div><span>对象</span><strong id="objects">0</strong></div>
-        <div><span>节点数</span><strong id="nodes">0</strong></div>
+  <section id="top" class="hero" aria-labelledby="heroHeading">
+    <div class="hero-main">
+      <span class="hero-kicker"><span class="pulse"></span> <span data-i18n="eyebrow">LOSSLESS JSON DEBUGGER</span></span>
+      <h1 id="heroHeading" data-i18n="heroTitle">Your JSON is valid. But is your data reliable?</h1>
+      <p class="hero-lead" data-i18n="heroLead">Find precision traps and duplicate keys, inspect exact source evidence, and keep your payload in your browser.</p>
+      <div class="hero-actions"><button type="button" id="trySampleHero" class="hero-primary" data-i18n="trySample">Try a real example</button><a href="#workbench" class="hero-secondary" data-i18n="secondaryCTA">Open the workbench</a></div>
+      <div class="hero-cred"><span>↳ RFC 8259</span><span>↳ Source-preserving AST</span><span>↳ No account</span></div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="art-toolbar"><span class="dot red"></span><span class="dot amber"></span><span class="dot green"></span><span class="art-filename">response.json</span></div>
+      <div class="art-code"><span class="art-muted">01</span> {<br><span class="art-muted">02</span> &nbsp; <span class="art-key">"orderId"</span>: <span class="art-number">9007199254740993</span>,<br><span class="art-muted">03</span> &nbsp; <span class="art-key">"status"</span>: <span class="art-string">"paid"</span><br><span class="art-muted">04</span> }</div>
+      <div class="art-finding"><span class="art-warning">!</span><div><strong>Precision risk detected</strong><small>Exact token retained · line 2</small></div><span class="art-check">✓</span></div>
+    </div>
+  </section>
+  <main>
+    <section class="samples-section" aria-labelledby="demoHeading">
+      <div class="section-intro"><h2 id="demoHeading" data-i18n="demoTitle">Try a one-click investigation</h2><p data-i18n="demoLead">Synthetic examples. No account or upload required.</p></div>
+      <div class="demo-grid">
+        <button class="demo-card" type="button" data-demo="precision"><span class="demo-index">01 / DATA INTEGRITY</span><strong data-i18n="demoPrecision">Precision trap</strong><code>9007199254740993</code><span class="demo-arrow" aria-hidden="true">↗</span></button>
+        <button class="demo-card" type="button" data-demo="duplicate"><span class="demo-index">02 / JSON STRUCTURE</span><strong data-i18n="demoDuplicate">Duplicate keys</strong><code>"role" × 2</code><span class="demo-arrow" aria-hidden="true">↗</span></button>
+        <button class="demo-card" type="button" data-demo="escaped"><span class="demo-index">03 / SOURCE EVIDENCE</span><strong data-i18n="demoEscaped">Escaped duplicate</strong><code>"a" = "\u0061"</code><span class="demo-arrow" aria-hidden="true">↗</span></button>
       </div>
     </section>
+    <section class="workbench-section" id="workbench" aria-labelledby="workbenchHeading">
+      <div class="workbench-topline"><div><span class="overline">THE WORKBENCH</span><h2 id="workbenchHeading" data-i18n="workbenchTitle">Inspection workbench</h2></div><span class="local-pill"><span class="local-dot"></span><span data-i18n="navPrivacy">Local-first</span></span></div>
+      <div class="layout">
+        <section class="panel source-panel" aria-labelledby="sourceHeading">
+          <div class="panel-heading"><div><p class="eyebrow dark">01 / <span data-i18n="sourceLabel">SOURCE INPUT</span></p><h3 id="sourceHeading">JSON</h3></div><span class="hint" data-i18n="inputHint">Ctrl / ⌘ + Enter</span></div>
+          <label class="sr-only" for="jsonInput">JSON source text</label>
+          <textarea id="jsonInput" spellcheck="false" autocomplete="off" autocapitalize="off" data-i18n-placeholder="placeholder" placeholder="Paste JSON here, or try a sample…"></textarea>
+          <div class="buttonbar"><button class="primary" id="parseBtn" data-i18n="parse">Inspect JSON</button><button id="cancelBtn" hidden data-i18n="cancel">Cancel</button><button id="formatBtn" data-i18n="format">Format</button><button id="loadSampleBtn" data-i18n="sample">Load example</button><button id="clearBtn" data-i18n="clear">Clear</button></div>
+          <details class="advanced-controls" id="advancedEngines"><summary>Advanced · engine fallback</summary><label class="engine-option"><input type="checkbox" id="losslessMode"> V0.3 Lossless Worker</label><label class="engine-option"><input type="checkbox" id="virtualTreeMode"> M04 Virtual Explorer</label></details>
+          <div class="upload" id="dropZone"><label for="fileInput" data-i18n="uploadLabel">Drop a .json file here, or choose a file</label><input type="file" id="fileInput" accept=".json,application/json"><p data-i18n="uploadNote">Browser-only processing · 2 MiB limit</p></div>
+        </section>
+        <section class="panel results-panel" aria-labelledby="outputHeading">
+          <div class="panel-heading"><div><p class="eyebrow dark">02 / <span data-i18n="resultLabel">RESULT &amp; EVIDENCE</span></p><h3 id="outputHeading" data-i18n="issuesTitle">Findings</h3></div><button id="downloadBtn" data-i18n="download">Export original</button></div>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <section id="issuesPanel" class="issues-panel" aria-label="JSON inspection findings" hidden></section>
+          <form id="pointerNav" class="pointer-nav" hidden aria-label="JSON Pointer navigation"><label for="pointerInput" data-i18n="pointerLabel">JSON Pointer</label><div class="pointer-controls"><input id="pointerInput" type="text" spellcheck="false" placeholder="/users/0/id" aria-describedby="pointerFeedback"><button id="navigatePointerBtn" type="submit" data-i18n="pointerGo">Find node</button></div><p id="pointerFeedback" class="pointer-feedback" role="status" aria-live="polite"></p></form>
+          <nav class="tabs" aria-label="Display mode"><button class="selected" data-view="tree" aria-pressed="true" data-i18n="tabTree">Tree</button><button data-view="raw" aria-pressed="false" data-i18n="tabRaw">Raw</button><button data-view="table" aria-pressed="false" data-i18n="tabTable">Table</button></nav>
+          <div id="jsonDisplay" class="output" aria-label="JSON content"><p class="muted" data-i18n="resultEmpty">Try a synthetic example or inspect your own JSON.</p></div>
+          <section id="nodeDetails" class="node-details" aria-label="Selected node details" hidden></section>
+          <div id="warnings" class="warnings" aria-live="polite"></div>
+          <div id="stats" class="stats" hidden><div><span>Keys</span><strong id="keys">0</strong></div><div><span>Depth</span><strong id="depth">0</strong></div><div><span>Arrays</span><strong id="arrays">0</strong></div><div><span>Objects</span><strong id="objects">0</strong></div><div><span>Nodes</span><strong id="nodes">0</strong></div></div>
+        </section>
+      </div>
+    </section>
+    <section class="value-section" aria-labelledby="valueHeading"><h2 id="valueHeading" data-i18n="whyTitle">From hidden risk to exact evidence</h2><div class="value-grid"><div><span class="value-number">01</span><h3 data-i18n="whyOne">Detect data risks</h3><p>Inspect source tokens without turning exact numbers into rounded JavaScript values.</p></div><div><span class="value-number">02</span><h3 data-i18n="whyTwo">Trace to the source</h3><p>Every finding links to a verified source span and the original position.</p></div><div><span class="value-number">03</span><h3 data-i18n="whyThree">Copy without rounding</h3><p>Keep the exact lexeme, escaping, and source text intact.</p></div></div></section>
   </main>
-  <footer>JSONParseWeb v0.3 experimental · 默认不发送或保存数据 · <a href="./docs/architecture.md">架构说明</a></footer>
+  <footer><span>JsonParseWeb · Product V1 preview</span><span data-i18n="privacyNote">No account · No automatic uploads · View source on GitHub</span><a href="https://github.com/1998x-stack/JsonParseWeb" rel="noopener noreferrer" target="_blank">Source ↗</a></footer>
   <script type="module" src="./src/app.mjs"></script>
 </body>
 </html>

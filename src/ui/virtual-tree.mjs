@@ -29,10 +29,10 @@ const el = (tag, cls='', text=undefined) => {
 const errorMessage = e => e?.message || '虚拟树操作失败';
 
 export class VirtualTreeView {
-  constructor({target, controller, isCurrent, onError=()=>{}, onSelect=()=>{}, rowHeight=TREE_ROW_HEIGHT, overscan=TREE_OVERSCAN}={}) {
+  constructor({target, controller, isCurrent, onError=()=>{}, onSelect=()=>{}, locale="zh", rowHeight=TREE_ROW_HEIGHT, overscan=TREE_OVERSCAN}={}) {
     if (!target || !controller || typeof isCurrent !== 'function') throw new TypeError('缺少虚拟树渲染依赖');
     this.target=target;this.controller=controller;this.isCurrent=isCurrent;this.onError=onError;this.onSelect=onSelect;
-    this.rowHeight=rowHeight;this.overscan=overscan;
+    this.rowHeight=rowHeight;this.overscan=overscan;this.locale=locale;
     this.disposed=false;this.epoch=null;this.totalVisible=0;this.loaded=null;
     this.requestSeq=0;this.inFlight=false;this.queued=false;this.mutation=false;
     this.frame=null;this.activeId=null;this.activeIndex=0;this.selectedId=null;this.selectedIndex=0;
@@ -42,7 +42,7 @@ export class VirtualTreeView {
   async mount() {
     const viewport=el('div','virtual-tree-viewport');
     viewport.setAttribute('role','tree');
-    viewport.setAttribute('aria-label','JSON 节点树');
+    viewport.setAttribute('aria-label',this.locale==='en'?'JSON node tree':'JSON 节点树');
     viewport.setAttribute('tabindex','0');
     viewport.setAttribute('aria-busy','true');
     const spacer=el('div','virtual-tree-spacer');
@@ -96,7 +96,7 @@ export class VirtualTreeView {
       this.renderWindow(page.items,page.offset);
       this.loaded={epoch,offset:range.offset,limit:range.limit};
       this.viewport.setAttribute('aria-busy','false');
-      this.status.textContent=`已显示 ${page.items.length} / ${this.totalVisible} 个可见节点`;
+      this.status.textContent=this.locale==='en'?`Showing ${page.items.length} / ${this.totalVisible} visible nodes`:`已显示 ${page.items.length} / ${this.totalVisible} 个可见节点`;
     }catch(error){if(this.alive && seq===this.requestSeq && epoch===this.epoch)this.report(error);}
     finally {this.inFlight=false;if(this.queued&&this.alive){this.queued=false;this.scheduleWindow();}}
   }
@@ -218,12 +218,14 @@ export class VirtualTreeView {
     this.refreshSelection();
   }
   /** Atomically reveal an RFC 6901 pointer and scroll to its mounted row. */
-  async revealPointer(pointer) {
+  async revealPointer(pointer) {return this.reveal({pointer});}
+  async revealNode(nodeId) {return this.reveal({nodeId});}
+  async reveal(target) {
     if(!this.alive||this.epoch===null)throw new Error('虚拟树尚未就绪');
     if(this.mutation)throw new Error('树正在更新，请重试');
     this.mutation=true;this.requestSeq++;this.loaded=null;
     try {
-      const reply=await this.controller.query('TREE_REVEAL',{pointer,expectedEpoch:this.epoch});
+      const reply=await this.controller.query('TREE_REVEAL',{...target,expectedEpoch:this.epoch});
       if(!this.alive)return null;
       this.epoch=reply.epoch;this.totalVisible=reply.totalVisible;
       this.activeId=reply.nodeId;this.selectedId=reply.nodeId;
@@ -232,7 +234,7 @@ export class VirtualTreeView {
       const viewportRows=Math.max(1,Math.floor((this.viewport.clientHeight||480)/this.rowHeight));
       this.viewport.scrollTop=Math.max(0,(reply.rowIndex-Math.floor(viewportRows/2))*this.rowHeight);
       void this.onSelect(reply.nodeId);
-      this.status.textContent=`已定位行 ${reply.rowIndex+1} / ${this.totalVisible}`;
+      this.status.textContent=this.locale==='en'?`Located row ${reply.rowIndex+1} / ${this.totalVisible}`:`已定位行 ${reply.rowIndex+1} / ${this.totalVisible}`;
       return reply;
     }catch(error){if(this.alive)this.status.textContent=`路径定位失败：${error.message}`;throw error;}
     finally {

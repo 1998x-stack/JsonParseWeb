@@ -78,7 +78,7 @@ export class WorkerClient {
   query(type,payload={},docId=this.docId,revision=this.revision) {
     if(docId!==this.docId||revision!==this.revision||docId===null)
       return Promise.reject(fail('STALE_DOCUMENT','文档版本已经变化'));
-    if(!['GET_NODE','GET_CHILDREN','GET_SOURCE_SLICE','RESOLVE_POINTER','FORMAT','TREE_INIT','TREE_SET_EXPANDED','GET_TREE_WINDOW','TREE_REVEAL','GET_TABLE_SCHEMA','GET_TABLE_WINDOW'].includes(type))
+    if(!['GET_NODE','GET_CHILDREN','GET_SOURCE_SLICE','RESOLVE_POINTER','FORMAT','TREE_INIT','TREE_SET_EXPANDED','GET_TREE_WINDOW','TREE_REVEAL','GET_TABLE_SCHEMA','GET_TABLE_WINDOW','GET_FINDINGS'].includes(type))
       return Promise.reject(fail('INVALID_OPERATION','禁止的查询类型'));
     return this.#request(type,docId,revision,payload);
   }

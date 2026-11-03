@@ -6,3 +6,5 @@ export {decodeUtf8, parseUtf8} from './import.mjs';
 export {buildLineIndex, locate, JsonFault} from './diagnostics.mjs';
 export {VisibleTreeIndex, TreeIndexError} from './visible-index.mjs';
 export {TableProjection,TableProjectionError} from './table-projection.mjs';
+
+export {inspectDocument,unsafeIntegerLexeme,safePointer} from './findings.mjs';
