@@ -90,3 +90,38 @@ footer{background:#edf3f9;border-top:1px solid #dbe5ee;display:flex;justify-cont
 @media(max-width:980px){.hero{grid-template-columns:1fr;padding:55px 28px 65px}.hero-art{max-width:590px}.workbench-section .layout{grid-template-columns:1fr}.demo-grid{grid-template-columns:1fr}.value-grid{grid-template-columns:1fr}.nav-actions{gap:12px}}
 @media(max-width:570px){.site-nav{padding:13px 17px}.brand{font-size:16px}.brand-mark{padding:4px 6px}.nav-link{display:none}.hero{padding:45px 19px 58px}.hero h1{font-size:35px}.hero-lead{font-size:15px}.art-code{font-size:11px}.samples-section,.workbench-section,.value-section{padding-left:14px;padding-right:14px}.workbench-topline{align-items:flex-start}.local-pill{font-size:10px;padding:7px}.issues-heading{display:block}.issues-intro{margin-top:5px}.workbench-section textarea{height:300px}}
 @media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}*{transition:none!important}}
+
+/* PRODUCT-03 — observational schema drift, bounded Worker projections. */
+.schema-drift-panel{margin:12px 0;border:1px solid #dbe3ee;border-radius:12px;background:#fff;overflow:hidden}
+.drift-toggle{cursor:pointer;padding:14px 16px;font-size:14px;font-weight:750;color:#243d60;background:#f5f8fe}
+.drift-toggle:focus-visible,.drift-locate:focus-visible,.drift-run:focus-visible{outline:3px solid #79aaf6;outline-offset:2px}
+.drift-disclosure[open] .drift-toggle{border-bottom:1px solid #dfe7f3}
+.drift-intro,.drift-method{font-size:12px;color:#5b6c83;line-height:1.6;margin:10px 14px}
+.drift-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 14px}
+.drift-file-label{font-size:12px;font-weight:650;color:#41536c}
+.drift-actions input{min-width:120px;max-width:230px;font-size:11px}
+.drift-actions button,.drift-locate,.drift-more{font-size:12px;padding:7px 10px;border-radius:7px}
+.drift-run{background:#315ac7;color:white;border-color:#315ac7}.drift-run:hover{background:#24489f}
+.drift-files,.drift-feedback,.drift-low,.drift-caution{font-size:11px;color:#65758a;overflow-wrap:anywhere;margin:8px 14px}
+.drift-feedback{min-height:1em;color:#355a88}
+.drift-body{padding:6px 14px 16px}
+.drift-body .drift-method{margin:7px 0 12px}
+.drift-heading{font-size:13px;margin:14px 0 8px}
+.drift-list{display:grid;gap:9px}
+.drift-card{padding:11px 13px;border:1px solid #dfe6f1;border-radius:9px;background:#fcfdff}
+.drift-card strong{display:block;font-size:12px;color:#243f70}
+.drift-field-name{display:inline-block;font-size:11px;color:#3c567d;max-width:100%;overflow-wrap:anywhere;padding-top:4px}
+.drift-distribution{font-size:11px;color:#5f7188;line-height:1.6;margin:7px 0}
+.drift-evidence-actions{display:flex;gap:6px;flex-wrap:wrap}
+.drift-locate{color:#345da3;background:#f0f5ff;border-color:#ccdaf4}
+.drift-fields-scroll{overflow:auto;max-height:250px;border:1px solid #e4e9f1;border-radius:8px}
+.drift-fields-table{border-collapse:collapse;min-width:100%;width:max-content;font-size:11px}
+.drift-fields-table th,.drift-fields-table td{border-bottom:1px solid #e7edf5;padding:7px 9px;text-align:left;max-width:290px;overflow-wrap:anywhere;vertical-align:top}
+.drift-fields-table th{position:sticky;top:0;background:#eaf1fb;color:#375071}
+.drift-more{margin-top:9px}
+.drift-evidence{padding:11px 14px 15px;border-top:1px solid #e2e9f2;background:#f8fbfe}
+.drift-evidence-title{font-size:12px;font-weight:650;color:#31527c;overflow-wrap:anywhere;margin:0 0 8px}
+.drift-evidence-source{width:100%;height:130px;min-height:90px;padding:10px;font:12px/1.5 ui-monospace,Consolas,monospace;background:#fff}
+@media(max-width:570px){.drift-actions{align-items:stretch;flex-direction:column}.drift-actions input{max-width:100%}}
+
+@media(min-width:981px){.demo-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}

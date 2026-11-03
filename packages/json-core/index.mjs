@@ -8,3 +8,5 @@ export {VisibleTreeIndex, TreeIndexError} from './visible-index.mjs';
 export {TableProjection,TableProjectionError} from './table-projection.mjs';
 
 export {inspectDocument,unsafeIntegerLexeme,safePointer} from './findings.mjs';
+
+export {analyzeSchemaDrift} from './schema-drift.mjs';

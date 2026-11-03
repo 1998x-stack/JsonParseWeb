@@ -207,3 +207,14 @@ python tests/e2e/product_v1_playwright.py
 See `docs/product/PRODUCT_01_02_IMPLEMENTATION.md` for feature boundaries,
 security assumptions and verification. PRODUCT-03 multi-sample Schema Drift,
 full i18n, public deployment and Product Hunt release are not delivered yet.
+
+
+## PRODUCT-03 — Schema Drift Explorer (observational)
+
+Enable the default lossless Worker engine. Use the **Schema Drift Explorer** disclosure below the findings to inspect the current JSON **array of objects**, or choose up to five related local `.json` files. The landing page **Schema drift** sample demonstrates field-type variation, missing fields, and `null` observations.
+
+Schema observations preserve duplicate-key occurrences and exact source evidence; they are **not normative API Schema violations**. Results only include field distributions for fewer than three eligible object records. Each evidence reference opens its originating local source (current editor or read-only additional sample).
+
+Strict resource limits: 2 MiB aggregate text, 100,000 combined AST nodes, 50,000 object members, 5 supplemental documents, 160 retained field entries, 100 retained observations. Counts and truncation are disclosed. Uploaded samples remain in browser memory only, with strict UTF-8 validation and no network upload.
+
+Run `npm test` (including independent field-count oracle and actual Worker-thread tests). The CI browser job runs `tests/e2e/product_v1_schema_drift_playwright.py`; local browser testing can be constrained by container policies. See `docs/product/PRODUCT_03_IMPLEMENTATION.md` for the exact semantics and remaining limitations.

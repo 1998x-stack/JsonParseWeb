@@ -8,6 +8,7 @@ import {createNodeDetailsView} from './ui/node-details.mjs';
 import {WorkerClient} from './worker/client.mjs';
 import {DocumentController} from './document/controller.mjs';
 import {createFindingsPanel} from './ui/findings-panel.mjs';
+import {createSchemaDriftPanel} from './ui/schema-drift-panel.mjs';
 import {PRODUCT_SAMPLES,applyStaticLocale,translate} from './product/i18n.mjs';
 
 const $=id=>document.getElementById(id);
@@ -27,7 +28,7 @@ toggle.disabled=!supportsWorker;
 toggle.checked=supportsWorker && params.get('engine')!=='legacy';
 virtualToggle.checked=params.has('virtual') ? params.get('virtual')==='1' : !legacyQuery;
 virtualToggle.disabled=!toggle.checked;
-let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeVirtualTable=null,activeNodeDetails=null,activeFindings=null;
+let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeVirtualTable=null,activeNodeDetails=null,activeFindings=null,activeDrift=null;
 const client=supportsWorker?new WorkerClient({workerFactory:()=>new Worker(new URL('./worker/worker-entry.mjs',import.meta.url),{type:'module'})}):null;
 const controller=client?new DocumentController(client,{docId:'local',onChange:s=>{
   cancelBtn.hidden=!(toggle.checked&&s.phase==='parsing');
@@ -35,7 +36,7 @@ const controller=client?new DocumentController(client,{docId:'local',onChange:s=
 const experimental=()=>Boolean(controller && toggle.checked);
 const announce=(message,error=false)=>{status.textContent=message;status.className=error?'status error':'status';};
 const clearNavigation=()=>{activeNodeDetails?.destroy();activeNodeDetails=null;$('pointerNav').hidden=true;$('nodeDetails').hidden=true;$('pointerFeedback').textContent='';};
-const clearResult=()=>{activeFindings?.destroy();activeFindings=null;activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
+const clearResult=()=>{activeDrift?.destroy();activeDrift=null;activeFindings?.destroy();activeFindings=null;activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
 function stale() {
   revision++;parsed=null;parsedRevision=-1;
   controller?.setSource(input.value);
@@ -127,6 +128,10 @@ async function renderSummary(summary) {
     }});
   await activeFindings.mount();
   if(!currentV03(stamp))return;
+  activeDrift?.destroy();
+  activeDrift=createSchemaDriftPanel({target:$('schemaDriftPanel'),controller,sourceInput:input,
+    isCurrent,getLocale:()=>locale,onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);}});
+  activeDrift.mount();
   announce(`${t('inspectSuccess')} · ${summary.stats.size_bytes} ${locale==='zh'?'字节':'bytes'} · ${summary.stats.nodes} ${locale==='zh'?'节点':'nodes'} · ${summary.inspection?.total??0} ${locale==='zh'?'条发现':'findings'}`);
 }
 async function analyze() {
@@ -231,12 +236,14 @@ for(const button of document.querySelectorAll('[data-demo]'))button.addEventList
   input.value=PRODUCT_SAMPLES[button.dataset.demo];stale();
   $('workbench').scrollIntoView({behavior:'smooth',block:'start'});
   if(!experimental()&&supportsWorker){toggle.checked=true;virtualToggle.checked=true;virtualToggle.disabled=false;stale();}
-  void analyze();
+  const demo=button.dataset.demo;
+  void analyze().then(()=>{if(demo==='drift'&&activeDrift?.alive)void activeDrift.analyze();});
 });
 $('trySampleHero').addEventListener('click',()=>document.querySelector('[data-demo="precision"]').click());
 $('languageSelect').addEventListener('change',event=>{
   locale=event.target.value;applyStaticLocale(locale);
   activeFindings?.render();
+  activeDrift?.render();
   // Rebuild view chrome while retaining parsed state and all source bytes.
   if(experimental()&&controller.snapshot.phase==='ready')void drawLossless();
   if(!input.value)announce(t('resultEmpty'));
