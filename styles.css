@@ -3,3 +3,13 @@
 @media(max-width:900px){.layout{grid-template-columns:1fr;margin:-.6rem auto 0;padding:0 1rem}.topbar{padding:1.5rem 1rem 2rem}.top-inner{align-items:flex-start;flex-direction:column}.privacy{font-size:.75rem}.panel{padding:1rem}textarea{height:270px}.stats{grid-template-columns:repeat(3,1fr)}.output{min-height:240px}}
 
 .engine-option{display:flex;gap:.5rem;align-items:center;font-size:.83rem;color:#324e79;padding:.35rem 0 .8rem}.engine-option input{accent-color:#315ac7}.lossless-line{overflow-wrap:anywhere}.lossless-children{padding-left:.7rem}.load-more{font-size:.77rem;margin:.4rem 0}.status.warning{background:#fff6e6;color:#81590f}
+
+/* M04-C viewport virtualizer: number of DOM treeitems remains bounded. */
+.virtual-tree-viewport{position:relative;overflow:auto;height:480px;max-height:calc(100vh - 240px);min-height:240px;outline-offset:-3px;contain:layout style paint}
+.virtual-tree-spacer{position:relative;min-height:1px;width:100%}
+.virtual-tree-window{position:absolute;left:0;right:0;top:0;width:100%}
+.virtual-tree-row{display:flex;align-items:center;gap:4px;height:30px;min-height:30px;max-height:30px;white-space:nowrap;overflow:hidden;font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;cursor:default;border-radius:4px;padding-right:8px}
+.virtual-tree-row.is-selected{background:#e8f0fe}.virtual-tree-row.is-active{box-shadow:inset 0 0 0 1px #7c9adb}
+.virtual-tree-disclosure{width:24px;min-width:24px;height:26px;padding:0;border:0;background:transparent;color:#3b5e8d;border-radius:4px;font-size:17px;line-height:1}
+.virtual-tree-disclosure:disabled{cursor:default;opacity:0}.virtual-tree-value,.virtual-tree-row .tree-key{display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.virtual-tree-row .tree-key{flex-shrink:0;max-width:42%}.virtual-tree-value{min-width:0;flex:1}
+.virtual-tree-count{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#647794;padding:6px 4px;border-top:1px solid #e4eaf2}

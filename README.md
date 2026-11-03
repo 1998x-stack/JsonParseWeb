@@ -125,3 +125,10 @@ const nextPage = await client.query('GET_TREE_WINDOW', {epoch: changed.epoch, of
 Additional command: `TREE_REVEAL` accepts `{pointer, expectedEpoch}` or `{nodeId, expectedEpoch}`, expands ancestors once and returns the target visible row index. Repeated `TREE_INIT` is idempotent for the active document revision. Existing M03 commands remain unchanged.
 
 Run `npm test` and `npm run bench:m04` to exercise randomized tree traces, 100k-node boundaries, 50k object keys, and actual Node Worker threads. Benchmarks are indicative; they are not UI latency measurements. The main browser tree remains paginated until M04-C virtual viewport integration. See [`docs/v0.3/M04_AB_REPORT.md`](docs/v0.3/M04_AB_REPORT.md).
+
+
+## V0.3 M04-C experimental virtual tree
+
+Enable the browser Worker mode and **M04 viewport virtual tree** checkbox, or open `http://localhost:8080/?engine=v03&virtual=1`. The AST and expanded visible preorder stay in the Worker; the view requests windows of at most 120 rows and mounts only current viewport rows. Keyboard: Up/Down, Home/End, Right expand or next child, Left collapse or go to parent. The M03 paginated tree is available by unchecking the virtual tree option. The virtual tree is not enabled in legacy mode.
+
+Run `npm test` and `python tests/e2e/m04_playwright.py` with the local HTTP server on port 8765 (install Playwright Chromium as indicated in `.github/workflows/ci.yml`). M04-D JSON Pointer search/detail view and M04-E virtual table are future stages.

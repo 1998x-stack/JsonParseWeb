@@ -2,23 +2,26 @@ import {parseDocument,prettyPrint,LIMITS} from './core/json.mjs';
 import {sample} from './core/sample.mjs';
 import {renderRaw,renderTree,renderTable} from './ui/render.mjs';
 import {createLosslessView} from './ui/lossless-render.mjs';
+import {createVirtualTreeView} from './ui/virtual-tree.mjs';
 import {WorkerClient} from './worker/client.mjs';
 import {DocumentController} from './document/controller.mjs';
 
 const $=id=>document.getElementById(id);
 const input=$('jsonInput'),display=$('jsonDisplay'),status=$('status');
-const toggle=$('losslessMode'),cancelBtn=$('cancelBtn');
+const toggle=$('losslessMode'),virtualToggle=$('virtualTreeMode'),cancelBtn=$('cancelBtn');
 const supportsWorker=typeof Worker!=='undefined';
 toggle.disabled=!supportsWorker;
 toggle.checked=supportsWorker && new URLSearchParams(location.search).get('engine')==='v03';
-let parsed=null,revision=0,parsedRevision=-1,view='tree';
+virtualToggle.checked=new URLSearchParams(location.search).get('virtual')==='1';
+virtualToggle.disabled=!toggle.checked;
+let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null;
 const client=supportsWorker?new WorkerClient({workerFactory:()=>new Worker(new URL('./worker/worker-entry.mjs',import.meta.url),{type:'module'})}):null;
 const controller=client?new DocumentController(client,{docId:'local',onChange:s=>{
   cancelBtn.hidden=!(toggle.checked&&s.phase==='parsing');
 }}):null;
 const experimental=()=>Boolean(controller && toggle.checked);
 const announce=(message,error=false)=>{status.textContent=message;status.className=error?'status error':'status';};
-const clearResult=()=>{display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
+const clearResult=()=>{activeVirtualTree?.destroy();activeVirtualTree=null;display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
 function stale() {
   revision++;parsed=null;parsedRevision=-1;
   controller?.setSource(input.value);
@@ -41,9 +44,16 @@ const currentV03=(r)=>experimental()&&controller.revision===r&&controller.snapsh
 async function drawLossless() {
   const snap=controller.snapshot,stamp=snap.revision;
   if(!currentV03(stamp)||!snap.summary?.root)return;
+  activeVirtualTree?.destroy();activeVirtualTree=null;
   if(view==='raw'){renderRaw(display,input.value);return;}
-  const pane=createLosslessView({target:display,controller,isCurrent:()=>currentV03(stamp)&&view===(viewAtStart)});
-  const viewAtStart=view;
+  if(view==='tree'&&virtualToggle.checked){
+    activeVirtualTree=createVirtualTreeView({target:display,controller,
+      isCurrent:()=>currentV03(stamp)&&view==='tree'&&virtualToggle.checked,
+      onError:error=>announce(`虚拟树查询失败：${error.message}`,true)});
+    await activeVirtualTree.mount();return;
+  }
+  const viewAtStart=view,virtualAtStart=virtualToggle.checked;
+  const pane=createLosslessView({target:display,controller,isCurrent:()=>currentV03(stamp)&&view===viewAtStart&&virtualToggle.checked===virtualAtStart});
   if(view==='tree')pane.tree(snap.summary.root);
   else await pane.table(snap.summary.root);
 }
@@ -151,7 +161,9 @@ $('loadSampleBtn').addEventListener('click',()=>{input.value=JSON.stringify(samp
 $('formatBtn').addEventListener('click',()=>{void format();});
 $('downloadBtn').addEventListener('click',download);
 for(const btn of document.querySelectorAll('[data-view]'))btn.addEventListener('click',()=>setView(btn.dataset.view));
-toggle.addEventListener('change',()=>{stale();if(input.value.trim())void analyze();else announce(experimental()?'V0.3 Worker 实验模式已启用。':'V0.2 兼容模式已启用。');});
+virtualToggle.addEventListener('change',()=>{activeVirtualTree?.destroy();activeVirtualTree=null;
+  if(experimental()&&controller.snapshot.phase==='ready'&&view==='tree')void drawLossless();});
+toggle.addEventListener('change',()=>{virtualToggle.disabled=!toggle.checked;stale();if(input.value.trim())void analyze();else announce(experimental()?'V0.3 Worker 实验模式已启用。':'V0.2 兼容模式已启用。');});
 cancelBtn.addEventListener('click',()=>{if(experimental()){controller.cancel();clearResult();announce('已取消当前解析。');}});
 $('fileInput').addEventListener('change',async e=>{await importFile(e.target.files[0]);e.target.value='';});
 const zone=$('dropZone');
