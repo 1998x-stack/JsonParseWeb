@@ -53,6 +53,7 @@ jobs:
           python tests/e2e/m04d_playwright.py
           python tests/e2e/m04e_playwright.py
           python tests/e2e/product_v1_playwright.py
+          python tests/e2e/product_v1_schema_drift_playwright.py
 
   independent-evaluation:
     runs-on: ubuntu-latest

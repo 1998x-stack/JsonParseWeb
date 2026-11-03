@@ -43,6 +43,7 @@
         <button class="demo-card" type="button" data-demo="precision"><span class="demo-index">01 / DATA INTEGRITY</span><strong data-i18n="demoPrecision">Precision trap</strong><code>9007199254740993</code><span class="demo-arrow" aria-hidden="true">↗</span></button>
         <button class="demo-card" type="button" data-demo="duplicate"><span class="demo-index">02 / JSON STRUCTURE</span><strong data-i18n="demoDuplicate">Duplicate keys</strong><code>"role" × 2</code><span class="demo-arrow" aria-hidden="true">↗</span></button>
         <button class="demo-card" type="button" data-demo="escaped"><span class="demo-index">03 / SOURCE EVIDENCE</span><strong data-i18n="demoEscaped">Escaped duplicate</strong><code>"a" = "\u0061"</code><span class="demo-arrow" aria-hidden="true">↗</span></button>
+        <button class="demo-card" type="button" data-demo="drift"><span class="demo-index">04 / FIELD DISTRIBUTIONS</span><strong data-i18n="demoDrift">Schema drift</strong><code>number · string · null · missing</code><span class="demo-arrow" aria-hidden="true">↗</span></button>
       </div>
     </section>
     <section class="workbench-section" id="workbench" aria-labelledby="workbenchHeading">
@@ -60,6 +61,7 @@
           <div class="panel-heading"><div><p class="eyebrow dark">02 / <span data-i18n="resultLabel">RESULT &amp; EVIDENCE</span></p><h3 id="outputHeading" data-i18n="issuesTitle">Findings</h3></div><button id="downloadBtn" data-i18n="download">Export original</button></div>
           <div id="status" class="status" role="status" aria-live="polite"></div>
           <section id="issuesPanel" class="issues-panel" aria-label="JSON inspection findings" hidden></section>
+          <section id="schemaDriftPanel" class="schema-drift-panel" aria-label="Schema drift observations" hidden></section>
           <form id="pointerNav" class="pointer-nav" hidden aria-label="JSON Pointer navigation"><label for="pointerInput" data-i18n="pointerLabel">JSON Pointer</label><div class="pointer-controls"><input id="pointerInput" type="text" spellcheck="false" placeholder="/users/0/id" aria-describedby="pointerFeedback"><button id="navigatePointerBtn" type="submit" data-i18n="pointerGo">Find node</button></div><p id="pointerFeedback" class="pointer-feedback" role="status" aria-live="polite"></p></form>
           <nav class="tabs" aria-label="Display mode"><button class="selected" data-view="tree" aria-pressed="true" data-i18n="tabTree">Tree</button><button data-view="raw" aria-pressed="false" data-i18n="tabRaw">Raw</button><button data-view="table" aria-pressed="false" data-i18n="tabTable">Table</button></nav>
           <div id="jsonDisplay" class="output" aria-label="JSON content"><p class="muted" data-i18n="resultEmpty">Try a synthetic example or inspect your own JSON.</p></div>

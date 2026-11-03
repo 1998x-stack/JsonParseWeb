@@ -7,6 +7,7 @@ import {pointerFor, resolvePointer, PointerFault} from '../../packages/json-core
 import {VisibleTreeIndex} from '../../packages/json-core/visible-index.mjs';
 import {TableProjection} from '../../packages/json-core/table-projection.mjs';
 import {inspectDocument} from '../../packages/json-core/findings.mjs';
+import {analyzeSchemaDrift} from '../../packages/json-core/schema-drift.mjs';
 
 const PAGE_SIZE = 100;
 const MAX_PREVIEW = 140;
@@ -86,7 +87,7 @@ export function createWorkerRuntime() {
   };
   const parse = (request, parsed) => {
     // Keep invalid documents too, so the following query returns an explicit validation error.
-    state={docId:request.docId,revision:request.revision,doc:parsed,tree:null,table:null,inspection:parsed.ok?inspectDocument(parsed):null};
+    state={docId:request.docId,revision:request.revision,doc:parsed,tree:null,table:null,schema:null,schemaRun:0,inspection:parsed.ok?inspectDocument(parsed):null};
     return parsed.ok
       ? {validSyntax:true,root:project(parsed,parsed.rootId),stats:parsed.stats,diagnostics:parsed.diagnostics.slice(0,100),inspection:{total:state.inspection.total,retained:state.inspection.retained,truncated:state.inspection.truncated,rules:state.inspection.rules}}
       : {validSyntax:false,root:null,stats:null,diagnostics:parsed.diagnostics?.length ? parsed.diagnostics.slice(0,100) : [parsed.error ?? {code:'INVALID_JSON',severity:'error',message:'无法解析 JSON'}]};
@@ -163,6 +164,48 @@ export function createWorkerRuntime() {
       return {offset,total:result.total,retained:result.retained,truncated:result.truncated,
         items:result.findings.slice(offset,offset+limit),
         nextOffset:offset+limit<result.retained?offset+limit:null};
+    },
+    INSPECT_SCHEMA_DRIFT(request) {
+      const doc=requireState(request);
+      const {samples=[]}=request.payload??{};
+      if(!Array.isArray(samples)||samples.length>5)
+        throw protocolError('SAMPLE_LIMIT','At most 5 additional documents are allowed');
+      const related=[{id:'current',doc}];
+      const ids=new Set(['current']);
+      let totalBytes=doc.stats.size_bytes,totalNodes=doc.nodes.length,totalKeys=doc.stats.total_keys;
+      for(let i=0;i<samples.length;i++) {
+        const item=samples[i];
+        if(typeof item?.id!=='string'||!/^[a-zA-Z0-9_-]{1,32}$/.test(item.id)||ids.has(item.id)||typeof item.source!=='string')
+          throw protocolError('INVALID_SAMPLE','Sample identifiers and content must be unique and valid');
+        ids.add(item.id);
+        const byteCount=new TextEncoder().encode(item.source).length;
+        totalBytes+=byteCount;
+        if(totalBytes>2*1024*1024)throw protocolError('SAMPLE_SIZE_LIMIT','Combined sample sources cannot exceed 2 MiB');
+        const parsed=parseLossless(item.source);
+        if(!parsed.ok)throw protocolError('SAMPLE_INVALID',`Sample ${i+1}: ${parsed.error?.message??'Invalid JSON'}`);
+        totalNodes+=parsed.nodes.length;totalKeys+=parsed.stats.total_keys;
+        if(totalNodes>100_000||totalKeys>50_000)
+          throw protocolError('SAMPLE_RESOURCE_LIMIT','Combined AST nodes or object members exceed analysis limits');
+        related.push({id:item.id,doc:parsed});
+      }
+      // Existing document is immutable; only transient side-sample ASTs are needed.
+      const report=analyzeSchemaDrift(related);
+      state.schema=report;state.schemaRun++;
+      const {fields,observations,...meta}=report;
+      return {...meta,runId:state.schemaRun,
+        fields:fields.slice(0,16),observations:observations.slice(0,12)};
+    },
+    GET_SCHEMA_DRIFT_PAGE(request) {
+      requireState(request);
+      const {runId,kind,offset=0,limit=12}=request.payload??{};
+      if(!state.schema||runId!==state.schemaRun)
+        throw protocolError('STALE_ANALYSIS','Schema analysis has changed; rerun inspection');
+      if(!['fields','observations'].includes(kind)||!asInt(offset,0,100_000)||!asInt(limit,1,30))
+        throw protocolError('INVALID_PAGE','Invalid schema analysis page');
+      const all=state.schema[kind];
+      return {kind,runId,total:kind==='fields'?state.schema.totalFields:state.schema.totalObservations,
+        retained:all.length,offset,items:all.slice(offset,offset+limit),
+        nextOffset:offset+limit<all.length?offset+limit:null};
     },
     GET_TABLE_SCHEMA(request) {
       const doc=requireState(request);
