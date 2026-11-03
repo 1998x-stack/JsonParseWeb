@@ -4,13 +4,30 @@ import {decodeUtf8} from '../../packages/json-core/import.mjs';
 import {JsonFault} from '../../packages/json-core/diagnostics.mjs';
 import {formatLossless} from '../../packages/json-core/formatter.mjs';
 import {pointerFor, resolvePointer, PointerFault} from '../../packages/json-core/pointer.mjs';
+import {VisibleTreeIndex} from '../../packages/json-core/visible-index.mjs';
 
 const PAGE_SIZE = 100;
 const MAX_PREVIEW = 140;
+const MAX_LABEL = 160;
 const MAX_SLICE = 64 * 1024;
 const MAX_FORMAT_BYTES = 16 * 1024 * 1024;
 const asInt = (n, min, max) => Number.isSafeInteger(n) && n >= min && n <= max;
-const clip = value => value.length > MAX_PREVIEW ? `${value.slice(0,MAX_PREVIEW)}…` : value;
+const boundedLabel = value => {
+  if (value.length <= MAX_LABEL) return value;
+  let end = MAX_LABEL;
+  const code = value.charCodeAt(end - 1);
+  if (code >= 0xd800 && code <= 0xdbff) end--;
+  return value.slice(0, end) + '…';
+};
+const previewScalar = (source, start, end) => {
+  // Never allocate a full source slice for a potentially huge scalar.
+  let tail = Math.min(start + MAX_PREVIEW, end);
+  if (tail < end) {
+    const code = source.charCodeAt(tail - 1);
+    if (code >= 0xd800 && code <= 0xdbff) tail--; // preserve surrogate pairs
+  }
+  return source.slice(start, tail) + (tail < end ? '…' : '');
+};
 const protocolError = (code, message) => Object.assign(new Error(message), {code});
 
 export function createWorkerRuntime() {
@@ -26,18 +43,48 @@ export function createWorkerRuntime() {
     if (!node) throw protocolError('INVALID_NODE', '节点不存在');
     const hasChildren = node.kind === 'array' ? node.children.length > 0 : node.kind === 'object' && node.members.length > 0;
     const childCount = node.kind === 'array' ? node.children.length : node.kind === 'object' ? node.members.length : 0;
-    const raw = doc.source.slice(node.start,node.end);
     const preview = node.kind === 'object' ? `Object (${childCount})`
       : node.kind === 'array' ? `Array (${childCount})`
-      : clip(raw);
+      : previewScalar(doc.source, node.start, node.end);
     let pointer = null;
     try {pointer = pointerFor(doc,id);} catch (error) {if (!(error instanceof PointerFault) || error.code !== 'AMBIGUOUS_MEMBER') throw error;}
     return {id, kind:node.kind, depth:node.depth, label, occurrence, span:{start:node.start,end:node.end},
       hasChildren, childCount, preview, pointer, ambiguous:pointer===null, rawNumber:node.kind==='number'?node.rawNumber:undefined};
   };
+  // New M04 windows never compute JSON Pointer and never expose unbounded rawNumber.
+  const projectTreeRow = (doc, tree, id) => {
+    const node = doc.nodes[id];
+    const parent = node.parentId === null ? null : doc.nodes[node.parentId];
+    let label = null, occurrence = null, posInSet = 1, setSize = 1;
+    if (node.edge?.kind === 'array') {
+      label = String(node.edge.index);
+      posInSet = node.edge.index + 1;
+      setSize = parent.children.length;
+    } else if (node.edge?.kind === 'object') {
+      const member = doc.members[node.edge.memberIndex];
+      label = boundedLabel(member.key);
+      occurrence = member.occurrence;
+      // O(1) lookup: built once when TREE_INIT runs, not a sibling scan per row.
+      posInSet = state.siblingPositions[id];
+      setSize = parent.members.length;
+    }
+    const childCount = node.kind === 'array' ? node.children.length : node.kind === 'object' ? node.members.length : 0;
+    const preview = node.kind === 'object' ? `Object (${childCount})`
+      : node.kind === 'array' ? `Array (${childCount})`
+      : previewScalar(doc.source, node.start, node.end);
+    return {id, nodeId: id, parentId: node.parentId, kind: node.kind, depth: node.depth,
+      label, occurrence, labelTruncated: node.edge?.kind === 'object' && doc.members[node.edge.memberIndex].key.length > MAX_LABEL,
+      posInSet, setSize, childCount, hasChildren: childCount > 0,
+      expanded: tree.isExpanded(id), preview, span: {start: node.start, end: node.end}};
+  };
+  const requireTree = request => {
+    const doc = requireState(request);
+    if (!state.tree) throw protocolError('TREE_NOT_INITIALIZED', '请先初始化树视图');
+    return {doc, tree: state.tree};
+  };
   const parse = (request, parsed) => {
     // Keep invalid documents too, so the following query returns an explicit validation error.
-    state={docId:request.docId,revision:request.revision,doc:parsed};
+    state={docId:request.docId,revision:request.revision,doc:parsed,tree:null};
     return parsed.ok
       ? {validSyntax:true,root:project(parsed,parsed.rootId),stats:parsed.stats,diagnostics:parsed.diagnostics.slice(0,100)}
       : {validSyntax:false,root:null,stats:null,diagnostics:parsed.diagnostics?.length ? parsed.diagnostics.slice(0,100) : [parsed.error ?? {code:'INVALID_JSON',severity:'error',message:'无法解析 JSON'}]};
@@ -59,6 +106,52 @@ export function createWorkerRuntime() {
         if(!(error instanceof JsonFault)) throw error;
         return parse(request,{ok:false,error:{code:error.code,severity:'error',message:error.message,span:{start:error.start,end:error.end},line:1,column:1},diagnostics:[]});
       }
+    },
+    TREE_INIT(request) {
+      const doc = requireState(request);
+      const expandRoot = request.payload?.expandRoot ?? true;
+      if (typeof expandRoot !== 'boolean') throw protocolError('INVALID_EXPANSION', 'expandRoot 必须为布尔值');
+      if (state.tree) return state.tree.snapshot(); // TREE_INIT is idempotent within a document revision.
+      state.tree = new VisibleTreeIndex(doc, {expandRoot});
+      // Build one dense sibling-position index so a 50k-column object can scroll
+      // without O(50k * windowRows) sibling indexOf() calls per viewport.
+      state.siblingPositions = new Uint32Array(doc.nodes.length);
+      for (const node of doc.nodes) {
+        if (node.kind !== 'object') continue;
+        for (let i = 0; i < node.members.length; i++)
+          state.siblingPositions[doc.members[node.members[i]].valueId] = i + 1;
+      }
+      return state.tree.snapshot();
+    },
+    TREE_SET_EXPANDED(request) {
+      const {tree} = requireTree(request);
+      const {nodeId, expanded, expectedEpoch} = request.payload ?? {};
+      return tree.setExpanded(nodeId, expanded, expectedEpoch);
+    },
+    GET_TREE_WINDOW(request) {
+      const {doc,tree} = requireTree(request);
+      const {epoch, offset = 0, limit = 50} = request.payload ?? {};
+      const window = tree.getWindow(epoch, offset, limit);
+      const {ids, ...metadata} = window;
+      return {...metadata, items: ids.map(id => projectTreeRow(doc, tree, id))};
+    },
+    TREE_REVEAL(request) {
+      const {doc,tree} = requireTree(request);
+      const {nodeId, pointer, expectedEpoch} = request.payload ?? {};
+      const hasId = nodeId !== undefined, hasPointer = pointer !== undefined;
+      if (hasId === hasPointer) throw protocolError('INVALID_REVEAL', '必须且只能提供 nodeId 或 pointer');
+      let targetId;
+      if (hasPointer) {
+        if (typeof pointer !== 'string' || pointer.length > 8192)
+          throw protocolError('INVALID_POINTER', 'JSON Pointer 无效或过长');
+        targetId = resolvePointer(doc, pointer);
+      } else {
+        if (!asInt(nodeId, 0, doc.nodes.length - 1)) throw protocolError('INVALID_NODE', '目标节点不存在');
+        targetId = nodeId;
+      }
+      const result = tree.reveal(targetId, expectedEpoch);
+      const node = doc.nodes[targetId];
+      return {...result, span: {start: node.start, end: node.end}};
     },
     GET_NODE(request) {
       const doc = requireState(request), id=request.payload?.id;

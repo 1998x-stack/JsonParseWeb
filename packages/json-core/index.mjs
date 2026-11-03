@@ -4,3 +4,4 @@ export {pointerFor, resolvePointer, PointerFault} from './pointer.mjs';
 export {formatLossless} from './formatter.mjs';
 export {decodeUtf8, parseUtf8} from './import.mjs';
 export {buildLineIndex, locate, JsonFault} from './diagnostics.mjs';
+export {VisibleTreeIndex, TreeIndexError} from './visible-index.mjs';

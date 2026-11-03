@@ -1,6 +1,6 @@
 {
   "name": "jsonparseweb",
-  "version": "0.3.0-alpha.2",
+  "version": "0.3.0-alpha.3",
   "private": true,
   "type": "module",
   "description": "Local-first JSON developer workbench",
@@ -10,7 +10,8 @@
     "check": "npm test && node --check src/app.mjs && node --check src/worker/runtime.mjs && node --check src/worker/client.mjs && node --check src/document/controller.mjs",
     "test:core": "node --test tests/v03/*.test.mjs",
     "bench:core": "node benchmarks/v03/bench.mjs",
-    "test:worker": "node --test tests/v03/worker.test.mjs"
+    "test:worker": "node --test tests/v03/worker.test.mjs",
+    "bench:m04": "node benchmarks/v03/visible-index-bench.mjs"
   },
   "engines": {
     "node": ">=20"

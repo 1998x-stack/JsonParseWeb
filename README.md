@@ -106,3 +106,22 @@ python tests/e2e/m03_playwright.py  # requires pip install playwright + playwrig
 Browser E2E with Chromium was prevented by local environment network policy in the development container; it runs as a dedicated job in GitHub Actions. Do not mark E2E passed unless its CI job reports success.
 
 See `docs/v0.3/M03_REPORT.md` for the review, operating model and outstanding M04 work.
+
+## V0.3 M04-A/B — visible index and Worker window protocol (headless core)
+
+The next foundation for viewport virtualization is implemented **inside the Worker**, not yet in the browser tree component. `VisibleTreeIndex` maintains the current expanded preorder, rejecting stale tree epochs. After parsing a document with the M03 `WorkerClient`, call:
+
+```js
+const tree = await client.query('TREE_INIT', {expandRoot: true});
+const page = await client.query('GET_TREE_WINDOW', {epoch: tree.epoch, offset: 0, limit: 60});
+const changed = await client.query('TREE_SET_EXPANDED', {
+  nodeId: page.items[1].nodeId,
+  expanded: true,
+  expectedEpoch: tree.epoch
+});
+const nextPage = await client.query('GET_TREE_WINDOW', {epoch: changed.epoch, offset: 0, limit: 60});
+```
+
+Additional command: `TREE_REVEAL` accepts `{pointer, expectedEpoch}` or `{nodeId, expectedEpoch}`, expands ancestors once and returns the target visible row index. Repeated `TREE_INIT` is idempotent for the active document revision. Existing M03 commands remain unchanged.
+
+Run `npm test` and `npm run bench:m04` to exercise randomized tree traces, 100k-node boundaries, 50k object keys, and actual Node Worker threads. Benchmarks are indicative; they are not UI latency measurements. The main browser tree remains paginated until M04-C virtual viewport integration. See [`docs/v0.3/M04_AB_REPORT.md`](docs/v0.3/M04_AB_REPORT.md).
