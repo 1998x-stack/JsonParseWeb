@@ -39,6 +39,15 @@ const messages={
     driftPresent:'Present',driftMissing:'Missing',driftField:'Field',driftTypeCounts:'Observed types',driftEvidence:'Locate evidence',
     driftSourceLocal:'local sample source',driftMore:'Show more observations',driftMoreFields:'Show more fields',
     driftTruncated:'Some entries are not included in this preview; result limits are explicitly bounded.',driftStale:'Source span is out of date; rerun the analysis.',
+    reportTitle:'Evidence report',reportIntro:'Preview a local report before copying or downloading. By default, no source, keys, pointers, filenames or excerpts are included.',
+    reportFormatLabel:'Format:',reportJson:'JSON',reportMarkdown:'Markdown',reportSensitive:'Include pointers, field names and short raw excerpts (may expose secrets)',
+    reportPreviewBtn:'Build local preview',reportReviewConfirm:'I reviewed the full preview and accept that it may contain sensitive data.',
+    reportCopyBtn:'Copy report',reportDownloadBtn:'Download report',reportCaution:'No automatic upload or sharing. Aggregate counts can still disclose structural information.',
+    reportPrivacyLink:'Verify local processing',reportBuilding:'Creating report locally…',
+    reportSafeReady:'Privacy-first report ready. Review the preview before export.',
+    reportDetailedReady:'Sensitive report ready. Read the entire preview and confirm before exporting.',
+    reportError:'Report failed',reportCopied:'Report copied locally',reportDownloaded:'Report saved locally',
+
     'SCHEMA.TYPE_VARIANCE':'Mixed field types', 'SCHEMA.MISSING_FIELD':'Field missing in some records', 'SCHEMA.NULL_VARIANCE':'Null and non-null values coexist'
   },
   zh:{
@@ -77,6 +86,15 @@ const messages={
     driftPresent:'存在',driftMissing:'缺失',driftField:'字段',driftTypeCounts:'观察类型',driftEvidence:'定位证据',
     driftSourceLocal:'本地样本原文',driftMore:'查看更多观察',driftMoreFields:'查看更多字段',
     driftTruncated:'因资源限制仅展示部分条目，未展示的数据不能视为已检查完毕。',driftStale:'原文区间已失效，请重新分析。',
+    reportTitle:'证据报告',reportIntro:'在本地复制或下载前先预览；默认省略原文、字段名、路径、文件名与数据片段。',
+    reportFormatLabel:'格式：',reportJson:'JSON',reportMarkdown:'Markdown',reportSensitive:'包含路径、字段名与部分原始证据（可能泄露敏感信息）',
+    reportPreviewBtn:'生成本地预览',reportReviewConfirm:'我已阅读完整预览，理解报告可能包含敏感信息。',
+    reportCopyBtn:'复制报告',reportDownloadBtn:'下载报告',reportCaution:'不自动上传或分享；聚合计数仍可能透露数据结构。',
+    reportPrivacyLink:'查看本地隐私验证',reportBuilding:'正在本地生成报告…',
+    reportSafeReady:'脱敏报告已准备好，请核对预览后导出。',
+    reportDetailedReady:'含敏感信息的报告已准备好，请阅读完整预览并确认后导出。',
+    reportError:'报告失败',reportCopied:'报告已在本地复制',reportDownloaded:'报告已保存到本地',
+
     'SCHEMA.TYPE_VARIANCE':'字段类型不一致','SCHEMA.MISSING_FIELD':'部分记录缺少字段','SCHEMA.NULL_VARIANCE':'混合 null 与非 null 值'
   }
 };

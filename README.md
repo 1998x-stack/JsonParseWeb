@@ -218,3 +218,11 @@ Schema observations preserve duplicate-key occurrences and exact source evidence
 Strict resource limits: 2 MiB aggregate text, 100,000 combined AST nodes, 50,000 object members, 5 supplemental documents, 160 retained field entries, 100 retained observations. Counts and truncation are disclosed. Uploaded samples remain in browser memory only, with strict UTF-8 validation and no network upload.
 
 Run `npm test` (including independent field-count oracle and actual Worker-thread tests). The CI browser job runs `tests/e2e/product_v1_schema_drift_playwright.py`; local browser testing can be constrained by container policies. See `docs/product/PRODUCT_03_IMPLEMENTATION.md` for the exact semantics and remaining limitations.
+
+## PRODUCT-04 — Evidence reports and local privacy proof
+
+Inspect JSON using the V1 interface. After a successful parse, **Evidence report** can generate a local JSON or Markdown summary. The default is an allowlist-based privacy-first report: source, keys, JSON Pointer paths, filenames and raw values are omitted. It still contains aggregate counts, which may reveal data shape. The optional detailed mode may contain sensitive key names, paths and excerpts; it requires a full preview and explicit confirmation before local export. Neither mode is automatically uploaded or shared.
+
+Read [`privacy.html`](privacy.html) for the threat model and reproducible checks. Test with `npm test` and `python tests/e2e/product_v1_privacy_report_playwright.py` (with a local HTTP server and installed Chromium). PRODUCT-04 does not add hosting/deployment or any cloud AI component; hosting and release review belong to PRODUCT-05.
+
+See [`docs/product/PRODUCT_04_IMPLEMENTATION.md`](docs/product/PRODUCT_04_IMPLEMENTATION.md) for safety and rollout limitations.

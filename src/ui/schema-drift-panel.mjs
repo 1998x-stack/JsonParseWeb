@@ -6,8 +6,8 @@ import {translate} from '../product/i18n.mjs';
 const MAX_SAMPLES=5, MAX_BYTES=2*1024*1024;
 const el=(tag,cls='',value)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(value!==undefined)node.textContent=String(value);return node;};
 export class SchemaDriftPanel {
-  constructor({target,controller,sourceInput,isCurrent,getLocale=()=> 'en',onMessage=()=>{}}){
-    Object.assign(this,{target,controller,sourceInput,isCurrent,getLocale,onMessage});
+  constructor({target,controller,sourceInput,isCurrent,getLocale=()=> 'en',onMessage=()=>{},onAnalysisChange=()=>{}}){
+    Object.assign(this,{target,controller,sourceInput,isCurrent,getLocale,onMessage,onAnalysisChange});
     this.samples=[];this.report=null;this.seq=0;this.disposed=false;this.observations=[];this.fields=[];
     this.nextObservations=null;this.nextFields=null;
   }
@@ -37,7 +37,7 @@ export class SchemaDriftPanel {
     this.nodes={details,summary,intro,label,input,run,clear,names,feedback,result,evidence,title,original};
     input.addEventListener('change',()=>{void this.loadFiles([...input.files]);input.value='';});
     run.addEventListener('click',()=>{void this.analyze();});
-    clear.addEventListener('click',()=>{this.seq++;this.samples=[];this.report=null;this.observations=[];this.fields=[];this.resetPresentation();});
+    clear.addEventListener('click',()=>{this.seq++;this.samples=[];this.report=null;this.observations=[];this.fields=[];this.onAnalysisChange();this.resetPresentation();});
     this.render();
   }
   resetPresentation(){
@@ -69,20 +69,20 @@ export class SchemaDriftPanel {
         data.push({id:`sample-${index+1}`,name:file.name.slice(0,80),source});
       }
       if(!this.alive||seq!==this.seq)return;
-      this.samples=data;this.report=null;this.observations=[];this.fields=[];
+      this.samples=data;this.report=null;this.observations=[];this.fields=[];this.onAnalysisChange();
       this.resetPresentation();n.feedback.textContent=t('driftReady');
-    }catch(error){if(this.alive&&seq===this.seq){this.samples=[];this.report=null;this.observations=[];this.fields=[];this.resetPresentation();n.feedback.textContent=`${t('driftReadError')}: ${error.code||''} ${error.message}`;}}
+    }catch(error){if(this.alive&&seq===this.seq){this.samples=[];this.report=null;this.observations=[];this.fields=[];this.onAnalysisChange();this.resetPresentation();n.feedback.textContent=`${t('driftReadError')}: ${error.code||''} ${error.message}`;}}
   }
   async analyze(){
     if(!this.alive)return null;
     const seq=++this.seq,t=this.t;
-    this.report=null;this.observations=[];this.fields=[];this.nextObservations=null;this.nextFields=null;
+    this.report=null;this.observations=[];this.fields=[];this.nextObservations=null;this.nextFields=null;this.onAnalysisChange();
     this.nodes.details.open=true;this.nodes.feedback.textContent=t('driftProgress');this.nodes.result.replaceChildren();this.nodes.evidence.hidden=true;
     try{
       const reply=await this.controller.query('INSPECT_SCHEMA_DRIFT',{
         samples:this.samples.map(({id,source})=>({id,source}))});
       if(!this.alive||seq!==this.seq)return null;
-      this.report=reply;this.observations=reply.observations;this.fields=reply.fields;
+      this.report=reply;this.observations=reply.observations;this.fields=reply.fields;this.onAnalysisChange();
       this.nextObservations=reply.retainedObservations>reply.observations.length?reply.observations.length:null;
       this.nextFields=reply.retainedFields>reply.fields.length?reply.fields.length:null;
       this.nodes.feedback.textContent=t('driftDone');this.render();return reply;
@@ -99,7 +99,7 @@ export class SchemaDriftPanel {
     try{
       const reply=await this.controller.query('GET_SCHEMA_DRIFT_PAGE',{runId,kind,offset,limit:16});
       if(!this.alive||seq!==this.seq||runId!==this.report?.runId)return;
-      this[kind].push(...reply.items);
+      this[kind].push(...reply.items);this.onAnalysisChange();
       if(kind==='fields')this.nextFields=reply.nextOffset;else this.nextObservations=reply.nextOffset;
       this.render();
     }catch(error){if(this.alive&&seq===this.seq)this.nodes.feedback.textContent=error.message;}

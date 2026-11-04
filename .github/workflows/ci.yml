@@ -12,6 +12,7 @@ jobs:
           node-version: '22'
       - run: npm test
       - run: node --check src/app.mjs && node --check src/ui/render.mjs && node --check src/core/json.mjs
+      - run: node --check src/product/evidence-report.mjs && node --check src/ui/evidence-report-panel.mjs
       - run: find packages/json-core src/worker src/document src/ui -name '*.mjs' -print0 | xargs -0 -n1 node --check
       - run: npm run bench:core
       - run: npm run bench:m04
@@ -54,6 +55,7 @@ jobs:
           python tests/e2e/m04e_playwright.py
           python tests/e2e/product_v1_playwright.py
           python tests/e2e/product_v1_schema_drift_playwright.py
+          python tests/e2e/product_v1_privacy_report_playwright.py
 
   independent-evaluation:
     runs-on: ubuntu-latest
