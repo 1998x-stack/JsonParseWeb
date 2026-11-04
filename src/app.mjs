@@ -9,6 +9,7 @@ import {WorkerClient} from './worker/client.mjs';
 import {DocumentController} from './document/controller.mjs';
 import {createFindingsPanel} from './ui/findings-panel.mjs';
 import {createSchemaDriftPanel} from './ui/schema-drift-panel.mjs';
+import {createEvidenceReportPanel} from './ui/evidence-report-panel.mjs';
 import {PRODUCT_SAMPLES,applyStaticLocale,translate} from './product/i18n.mjs';
 
 const $=id=>document.getElementById(id);
@@ -28,7 +29,7 @@ toggle.disabled=!supportsWorker;
 toggle.checked=supportsWorker && params.get('engine')!=='legacy';
 virtualToggle.checked=params.has('virtual') ? params.get('virtual')==='1' : !legacyQuery;
 virtualToggle.disabled=!toggle.checked;
-let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeVirtualTable=null,activeNodeDetails=null,activeFindings=null,activeDrift=null;
+let parsed=null,revision=0,parsedRevision=-1,view='tree',activeVirtualTree=null,activeVirtualTable=null,activeNodeDetails=null,activeFindings=null,activeDrift=null,activeReport=null;
 const client=supportsWorker?new WorkerClient({workerFactory:()=>new Worker(new URL('./worker/worker-entry.mjs',import.meta.url),{type:'module'})}):null;
 const controller=client?new DocumentController(client,{docId:'local',onChange:s=>{
   cancelBtn.hidden=!(toggle.checked&&s.phase==='parsing');
@@ -36,7 +37,7 @@ const controller=client?new DocumentController(client,{docId:'local',onChange:s=
 const experimental=()=>Boolean(controller && toggle.checked);
 const announce=(message,error=false)=>{status.textContent=message;status.className=error?'status error':'status';};
 const clearNavigation=()=>{activeNodeDetails?.destroy();activeNodeDetails=null;$('pointerNav').hidden=true;$('nodeDetails').hidden=true;$('pointerFeedback').textContent='';};
-const clearResult=()=>{activeDrift?.destroy();activeDrift=null;activeFindings?.destroy();activeFindings=null;activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
+const clearResult=()=>{activeReport?.destroy();activeReport=null;activeDrift?.destroy();activeDrift=null;activeFindings?.destroy();activeFindings=null;activeVirtualTree?.destroy();activeVirtualTree=null;activeVirtualTable?.destroy();activeVirtualTable=null;clearNavigation();display.replaceChildren();$('stats').hidden=true;$('warnings').replaceChildren();};
 function stale() {
   revision++;parsed=null;parsedRevision=-1;
   controller?.setSource(input.value);
@@ -130,8 +131,14 @@ async function renderSummary(summary) {
   if(!currentV03(stamp))return;
   activeDrift?.destroy();
   activeDrift=createSchemaDriftPanel({target:$('schemaDriftPanel'),controller,sourceInput:input,
-    isCurrent,getLocale:()=>locale,onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);}});
+    isCurrent,getLocale:()=>locale,onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);},
+    onAnalysisChange:()=>activeReport?.invalidate()});
   activeDrift.mount();
+  activeReport?.destroy();
+  activeReport=createEvidenceReportPanel({target:$('reportPanel'),controller,isCurrent,
+    getLocale:()=>locale,getDrift:()=>activeDrift?.alive?activeDrift:null,
+    onMessage:(message,error=false)=>{if(isCurrent())announce(message,error);}});
+  activeReport.mount();
   announce(`${t('inspectSuccess')} · ${summary.stats.size_bytes} ${locale==='zh'?'字节':'bytes'} · ${summary.stats.nodes} ${locale==='zh'?'节点':'nodes'} · ${summary.inspection?.total??0} ${locale==='zh'?'条发现':'findings'}`);
 }
 async function analyze() {
@@ -244,6 +251,7 @@ $('languageSelect').addEventListener('change',event=>{
   locale=event.target.value;applyStaticLocale(locale);
   activeFindings?.render();
   activeDrift?.render();
+  activeReport?.render();
   // Rebuild view chrome while retaining parsed state and all source bytes.
   if(experimental()&&controller.snapshot.phase==='ready')void drawLossless();
   if(!input.value)announce(t('resultEmpty'));

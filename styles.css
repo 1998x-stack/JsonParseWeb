@@ -125,3 +125,15 @@ footer{background:#edf3f9;border-top:1px solid #dbe5ee;display:flex;justify-cont
 @media(max-width:570px){.drift-actions{align-items:stretch;flex-direction:column}.drift-actions input{max-width:100%}}
 
 @media(min-width:981px){.demo-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* PRODUCT-04: privacy-first report preview. Never render JSON as HTML. */
+.report-panel{margin:1rem 0;border:1px solid #d6e2ee;border-radius:12px;background:#f8fbff;padding:1rem;min-width:0}
+.report-heading{margin:0 0 .25rem;font-size:1.02rem}.report-description,.report-privacy-note{font-size:.82rem;color:#526579;line-height:1.6}
+.report-options,.report-export-actions{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center;margin:.8rem 0}
+.report-options label,.report-confirm-label{display:flex;align-items:center;gap:.45rem;font-size:.82rem;color:#293c55}
+.report-options select{border:1px solid #b9c7d7;border-radius:6px;padding:.45rem;background:white}
+.report-sensitive-label{flex:1 1 100%}.report-sensitive-label input,.report-confirm-label input{width:1rem;height:1rem;accent-color:#274eb5}
+.report-confirm-label{padding:.7rem;background:#fff3e4;border:1px solid #e4c7a4;border-radius:7px;margin:.75rem 0}
+.report-preview{white-space:pre-wrap;overflow:auto;overflow-wrap:anywhere;max-height:360px;min-height:55px;border:1px solid #d6e0eb;border-radius:8px;background:#fff;padding:.85rem;font:12px/1.5 ui-monospace,monospace;tab-size:2}
+.report-feedback{min-height:1rem;font-size:.82rem;color:#435c7a}.report-export-actions button:disabled{opacity:.4;cursor:not-allowed}
+.report-privacy-link{font-size:.85rem;color:#2459a1;text-decoration:underline}

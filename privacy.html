@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'self'">
+<title>Local processing and privacy · JsonParseWeb</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="site-header"><nav class="site-nav" aria-label="Primary navigation"><a class="brand" href="./index.html">JsonParseWeb</a><a href="https://github.com/1998x-stack/JsonParseWeb" rel="noopener noreferrer" target="_blank">Review source</a></nav></header>
+<main class="privacy-document" style="max-width:760px;margin:3rem auto;padding:0 1.5rem;line-height:1.75">
+<h1>Local processing &amp; privacy verification</h1>
+<p><strong>Core inspect workflow:</strong> the browser parses JSON with a same-origin Web Worker. The product does not intentionally upload the inspected JSON to an API, remote AI service or analytics endpoint. Source is held in browser memory for the active document. This describes the present code, not a promise against compromised hosting or browser extensions.</p>
+<h2>What happens to your data?</h2>
+<ul>
+<li>Pasting, opening files, searching, drift analysis and report generation operate locally in the browser.</li>
+<li>Static HTML, JavaScript and CSS are downloaded from the site hosting this app when first loaded. This is <em>not</em> the same as sending your JSON content.</li>
+<li>Input files are not intentionally written to localStorage, IndexedDB, Cache Storage or cookies by the application.</li>
+<li>Clipboard access occurs only after choosing a copy action. Downloads occur only after choosing an export action. Their contents may be accessible to local software and users of your device.</li>
+<li>Default report exports omit user JSON, field names, pointers, filenames and raw evidence. Aggregate statistics may reveal structural patterns.</li>
+<li>If you explicitly enable detailed evidence, it can contain confidential field names, paths and raw snippets. A separate preview and confirmation are required.</li>
+</ul>
+<h2>How to verify</h2>
+<ol>
+<li>Open Developer Tools → Network, enable Preserve log, and paste a synthetic marker (never a real secret).</li>
+<li>Inspect JSON, run Schema Drift and generate a default report. Look for outgoing requests and inspect their URLs and bodies.</li>
+<li>Open Application / Storage and check cookies, localStorage, IndexedDB and Cache Storage before and after.</li>
+<li>Review the reproducible Chromium test in <code>tests/e2e/product_v1_privacy_report_playwright.py</code>.</li>
+</ol>
+<p>Tests measure behavior of the checked-in build on a particular browser and cannot guarantee properties of compromised servers, modifications made by extensions, or a future release.</p>
+<h2>Limits and independent checks</h2>
+<p>The current parser input cap is 2 MiB. A valid JSON payload is not proof of correct business data. The syntax and deterministic-risk checks cover only specific cases; Schema Drift is observational rather than a validated API contract.</p>
+<p>Do not include proprietary or sensitive source in issue reports unless your organization permits it. Prefer synthetic reproductions.</p>
+<p><a href="./index.html#workbench">Back to workbench</a></p>
+</main>
+</body></html>

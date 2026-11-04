@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Find hidden JSON data problems. Detect unsafe integers and duplicate keys with exact, local source evidence. No account or automatic uploads.">
   <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'self'">
   <meta name="color-scheme" content="light">
   <meta property="og:title" content="JsonParseWeb — Find what your JSON is hiding">
   <meta property="og:description" content="A private, lossless JSON debugger with evidence-first diagnostics.">
@@ -62,6 +63,7 @@
           <div id="status" class="status" role="status" aria-live="polite"></div>
           <section id="issuesPanel" class="issues-panel" aria-label="JSON inspection findings" hidden></section>
           <section id="schemaDriftPanel" class="schema-drift-panel" aria-label="Schema drift observations" hidden></section>
+          <section id="reportPanel" class="report-panel" aria-label="Privacy-aware report preview" hidden></section>
           <form id="pointerNav" class="pointer-nav" hidden aria-label="JSON Pointer navigation"><label for="pointerInput" data-i18n="pointerLabel">JSON Pointer</label><div class="pointer-controls"><input id="pointerInput" type="text" spellcheck="false" placeholder="/users/0/id" aria-describedby="pointerFeedback"><button id="navigatePointerBtn" type="submit" data-i18n="pointerGo">Find node</button></div><p id="pointerFeedback" class="pointer-feedback" role="status" aria-live="polite"></p></form>
           <nav class="tabs" aria-label="Display mode"><button class="selected" data-view="tree" aria-pressed="true" data-i18n="tabTree">Tree</button><button data-view="raw" aria-pressed="false" data-i18n="tabRaw">Raw</button><button data-view="table" aria-pressed="false" data-i18n="tabTable">Table</button></nav>
           <div id="jsonDisplay" class="output" aria-label="JSON content"><p class="muted" data-i18n="resultEmpty">Try a synthetic example or inspect your own JSON.</p></div>
@@ -73,7 +75,7 @@
     </section>
     <section class="value-section" aria-labelledby="valueHeading"><h2 id="valueHeading" data-i18n="whyTitle">From hidden risk to exact evidence</h2><div class="value-grid"><div><span class="value-number">01</span><h3 data-i18n="whyOne">Detect data risks</h3><p>Inspect source tokens without turning exact numbers into rounded JavaScript values.</p></div><div><span class="value-number">02</span><h3 data-i18n="whyTwo">Trace to the source</h3><p>Every finding links to a verified source span and the original position.</p></div><div><span class="value-number">03</span><h3 data-i18n="whyThree">Copy without rounding</h3><p>Keep the exact lexeme, escaping, and source text intact.</p></div></div></section>
   </main>
-  <footer><span>JsonParseWeb · Product V1 preview</span><span data-i18n="privacyNote">No account · No automatic uploads · View source on GitHub</span><a href="https://github.com/1998x-stack/JsonParseWeb" rel="noopener noreferrer" target="_blank">Source ↗</a></footer>
+  <footer><span>JsonParseWeb · Product V1 preview</span><span data-i18n="privacyNote">No account · No automatic uploads · View source on GitHub</span><a href="./privacy.html" data-i18n="reportPrivacyLink">Verify local processing</a><a href="https://github.com/1998x-stack/JsonParseWeb" rel="noopener noreferrer" target="_blank">Source ↗</a></footer>
   <script type="module" src="./src/app.mjs"></script>
 </body>
 </html>
